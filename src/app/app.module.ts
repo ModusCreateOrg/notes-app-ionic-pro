@@ -11,6 +11,7 @@ import { TabsControllerPage } from '../pages/tabs-controller/tabs-controller';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { AppErrorHandlerProvider } from '../providers/app-error-handler/app-error-handler';
+import { MonitorPage } from '../pages/monitor/monitor';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { AppErrorHandlerProvider } from '../providers/app-error-handler/app-erro
     HomePage,
     AboutPage,
     SettingsPage,
-    TabsControllerPage
+    TabsControllerPage,
+    MonitorPage
   ],
   imports: [
     BrowserModule,
@@ -30,7 +32,8 @@ import { AppErrorHandlerProvider } from '../providers/app-error-handler/app-erro
     HomePage,
     AboutPage,
     SettingsPage,
-    TabsControllerPage
+    TabsControllerPage,
+    MonitorPage
   ],
   providers: [
     StatusBar,
