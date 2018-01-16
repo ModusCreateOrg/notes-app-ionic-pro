@@ -49,7 +49,7 @@ export class MonitorPage {
   wrapFunctionTrackingError() {
     this.wrappedFunction = Pro.getApp().monitoring.wrap(() => {
       this.wrappedFunction = null;
-      throw new Error('error from monitoring.wrap  ');
+      throw new Error('error from monitoring.wrap');
     });
   }
 
