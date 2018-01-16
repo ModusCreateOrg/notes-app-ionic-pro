@@ -1,14 +1,55 @@
 <ion-header>
   <ion-navbar>
     <ion-title>
-      Ionic Blank
+      Home
     </ion-title>
   </ion-navbar>
 </ion-header>
-
-<ion-content padding>
-  The world is your oyster.
-  <p>
-    If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will be your guide.
-  </p>
+<ion-content padding id="page2">
+  <button id="home-button1" ion-button clear color="positive" block>
+    Add Note
+  </button>
+  <div id="home-container1">
+    <ion-list id="home-list1">
+      <ion-item-sliding>
+        <ion-item color="none" id="home-list-item4">
+          My First Note
+        </ion-item>
+        <ion-item-options side="left">
+          <button ion-button color="positive">
+            Edit
+          </button>
+          <button ion-button color="assertive">
+            Delete
+          </button>
+        </ion-item-options>
+      </ion-item-sliding>
+      <ion-item-sliding>
+        <ion-item color="none" id="home-list-item7">
+          My Second Note
+        </ion-item>
+        <ion-item-options side="left">
+          <button ion-button color="positive">
+            Edit
+          </button>
+          <button ion-button color="assertive">
+            Delete
+          </button>
+        </ion-item-options>
+      </ion-item-sliding>
+      <ion-item-sliding>
+        <ion-item color="none" id="home-list-item8">
+          My Third Note
+        </ion-item>
+        <ion-item-options side="left">
+          <button ion-button color="positive">
+            Edit
+          </button>
+          <button ion-button color="assertive">
+            Delete
+          </button>
+        </ion-item-options>
+      </ion-item-sliding>
+    </ion-list>
+  </div>
 </ion-content>
