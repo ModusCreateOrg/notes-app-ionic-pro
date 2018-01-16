@@ -17,7 +17,7 @@ export class MonitorPage {
    * @author Ahsan Ayaz
    * @desc Triggers an error manually that can be seen on Ionic Monitor
    */
-  triggerError() {
+  triggerTestError() {
     this.app.monitoring.exception(new Error('My triggered error'))
   }
 
