@@ -4,6 +4,8 @@ branches:
   # Safelist
   only:
     - feature/travis-build-integration
+git:
+  depth: 1
 matrix:
   include:
     -
@@ -66,6 +68,7 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
+    - $HOME/.cache/yarn
 before_install:
   - "export LANG=en_US.UTF-8"
   # v8 is the active LTS release.
@@ -73,7 +76,6 @@ before_install:
   - "yarn global add ionic cordova"
 script:
   # Run tests here.
-  - "echo \"Environment - Java $TRAVIS_JDK_VERSION; Node $TRAVIS_NODE_VERSION\""
   - "echo \"Travis branch is $TRAVIS_BRANCH\""
   - "echo \"Travis branch is in pull request $TRAVIS_PULL_REQUEST\""
   - "yarn install"
@@ -82,6 +84,7 @@ after_failure:
   - "echo \"[FAIL] Build result is $TRAVIS_TEST_RESULT\""
 after_success:
   - "echo \"[PASS] Build result is $TRAVIS_TEST_RESULT\""
+  - "echo \"Environment - Java $TRAVIS_JDK_VERSION; Node $TRAVIS_NODE_VERSION\""
 env:
   global:
     - JAVA_HOME=/usr/lib/jvm/java-8-oracle
