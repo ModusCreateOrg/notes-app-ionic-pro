@@ -1,84 +1,87 @@
+---
 # Environment variables: https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
 branches:
-  # Safelist.
+  # Safelist
   only:
-  - feature/travis-build-integration
+    - feature/travis-build-integration
 matrix:
   include:
-    # Including OSX later will allow us to run a Build Matrix.
-    - os: linux
-    sudo: false
-    # Source: https://docs.travis-ci.com/user/languages/android/
-    language: android
-    android:
-      # If components are missing on build, do `android list sdk --no-ui --all --extended`
-      # in local dev environment to find out what's missing.
-      components:
-        # Uncomment the lines below if you want to
-        # use the latest revision of Android SDK Tools
-        # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
-        - tools
-        - platform-tools
-        - tools
+    -
+      # Including OSX later will allow us to run a Build Matrix.
+      os: linux
+      sudo: false
+      # Source: https://docs.travis-ci.com/user/languages/android/
+      language: android
+      android:
+        # If components are missing on build, do `android list sdk --no-ui --all --extended`
+        # in local dev environment to find out what's missing.
+        components:
+          # Uncomment the lines below if you want to
+          # use the latest revision of Android SDK Tools
+          # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
+          - tools
+          - platform-tools
+          - tools
 
-        # The BuildTools version used by your project
-        - build-tools-26.0.2
+          # The BuildTools version used by your project
+          - build-tools-26.0.2
 
-        # The SDK version used to compile your project
-        - android-26
+          # The SDK version used to compile your project
+          - android-26
 
-        # Additional components
-        - extra-google-google_play_services
-        - extra-google-m2repository
-        - extra-android-m2repository
-        - addon-google_apis-google-26
+          # Additional components
+          - extra-google-google_play_services
+          - extra-google-m2repository
+          - extra-android-m2repository
+          - addon-google_apis-google-26
 
-        # Specify at least one system image,
-        # if you need to run emulator(s) during your tests
-        - sys-img-armeabi-v7a-android-26
-        - sys-img-armeabi-v7a-android-17
+          # Specify at least one system image,
+          # if you need to run emulator(s) during your tests
+          - sys-img-armeabi-v7a-android-26
+          - sys-img-armeabi-v7a-android-17
 
-        # Install Android SDK components.
-        - sys-img-armeabi-v7a-android-tv-l
-        - add-on
-        - extra
-    addons:
-      apt:
-        sources:
-          - sourceline: deb https://dl.yarnpkg.com/debian/ stable main
-            key_url: https://dl.yarnpkg.com/debian/pubkey.gpg
-        packages:
-          - oracle-java8-installer
-          - oracle-java8-set-default
-          - yarn
-    licenses:
-      - 'android-sdk-preview-license-.+'
-      - 'android-sdk-license-.+'
-      - 'google-gdk-license-.+'
+          # Install Android SDK components.
+          - sys-img-armeabi-v7a-android-tv-l
+          - add-on
+          - extra
+  addons:
+    apt:
+      sources:
+        - 
+          sourceline: "deb https://dl.yarnpkg.com/debian/ stable main"
+          key_url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
+      packages:
+        - oracle-java8-installer
+        - oracle-java8-set-default
+        - yarn
+  licenses:
+    - android-sdk-preview-license-.+
+    - android-sdk-license-.+
+    - google-gdk-license-.+
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - "rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock"
+  - "rm -fr $HOME/.gradle/caches/*/plugin-resolution/"
 cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
 before_install:
-  - export LANG=en_US.UTF-8
+  - "export LANG=en_US.UTF-8"
   # v8 is the active LTS release.
-  - nvm install 8
-  - yarn global add ionic cordova
+  - "nvm install 8"
+  - "yarn global add ionic cordova"
 script:
   # Run tests here.
-  - echo "Environment - Java $TRAVIS_JDK_VERSION; Node $TRAVIS_NODE_VERSION"
-  - echo "Travis branch is $TRAVIS_BRANCH"
-  - echo "Travis branch is in pull request $TRAVIS_PULL_REQUEST"
-  - yarn install
-  - ionic cordova platform add android --nofetch && ionic cordova build android
+  - "echo \"Environment - Java $TRAVIS_JDK_VERSION; Node $TRAVIS_NODE_VERSION\""
+  - "echo \"Travis branch is $TRAVIS_BRANCH\""
+  - "echo \"Travis branch is in pull request $TRAVIS_PULL_REQUEST\""
+  - "yarn install"
+  - "ionic cordova platform add android --nofetch && ionic cordova build android"
 after_failure:
-  - echo "[FAIL] Build result is $TRAVIS_TEST_RESULT"
+  - "echo \"[FAIL] Build result is $TRAVIS_TEST_RESULT\""
 after_success:
-  - echo "[PASS] Build result is $TRAVIS_TEST_RESULT"
+  - "echo \"[PASS] Build result is $TRAVIS_TEST_RESULT\""
 env:
   global:
     - JAVA_HOME=/usr/lib/jvm/java-8-oracle
