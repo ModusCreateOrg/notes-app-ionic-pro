@@ -2,7 +2,7 @@
 branches:
   # Safelist.
   only:
-  - develop
+  - feature/travis-build-integration
 matrix:
   include:
     # Including OSX later will allow us to run a Build Matrix.
