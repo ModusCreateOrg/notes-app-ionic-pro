@@ -97,5 +97,6 @@ deploy:
   secret_access_key: "$AWS_SECRET_ACCESS_KEY"
   skip_cleanup: true
   bucket: "041440807701-us-east-1-device-farm"
+  local_dir: "/home/travis/build/ModusCreateOrg/notes-app-ionic-pro/platforms/android/build/outputs/apk/debug"
   on:
     all_branches: true
