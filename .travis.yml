@@ -106,4 +106,5 @@ deploy:
   on:
     all_branches: true
 # after_deploy:
+#   - ./travis/deploy/after/run_tests.sh
 #   - ./travis/deploy/after/check_results.sh
