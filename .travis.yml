@@ -18,9 +18,8 @@ matrix:
         # If components are missing on build, do `android list sdk --no-ui --all --extended`
         # in local dev environment to find out what's missing.
         components:
-          # Uncomment the lines below if you want to
-          # use the latest revision of Android SDK Tools
           # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
+          # See: https://docs.travis-ci.com/user/languages/android/#Installing-a-newer-SDK-Platform-Tools-revision
           - tools
           - platform-tools
           - tools
@@ -78,14 +77,25 @@ script:
   # Run tests here.
   - "echo \"Travis branch is $TRAVIS_BRANCH\""
   - "echo \"Travis branch is in pull request $TRAVIS_PULL_REQUEST\""
-  - "yarn install"
-  - "ionic cordova platform add android --nofetch && ionic cordova build android"
+  - ./travis/build.sh
 after_failure:
   - "echo \"[FAIL] Build result is $TRAVIS_TEST_RESULT\""
 after_success:
   - "echo \"[PASS] Build result is $TRAVIS_TEST_RESULT\""
-  - "echo \"Environment - Java $TRAVIS_JDK_VERSION; Node $TRAVIS_NODE_VERSION\""
 env:
   global:
     - JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
+    # AWS_ACCESS_KEY_ID
+    - secure: "Qx7qPgynshVDgHVT58CkW83joEJqVE27jniHSJSFnqgpeMQjpNi9syjr2rb6ELLH6Z70fCYz3rQ+eSoVok68/r/3JByi52a9Osj4M+vKlKtUxMbEltoXQhMEc6nV7vIxjzJzBRV2VlTz1lsr9jGj4EYJ1nUWXIa8gfOcLhij1FOm4Glle0R/DKF5wRlIS4AJOTuAPT7m2KPOmoWK7Z+KFyja5DQDd1p4dcpGCGbEE1dOfBj9l6kvg4WcaJv6DnGNtcP7xXpyQZIrrTiJCft7Nh5k8vDiKkaMvSgQ2qNn6OJYUinzdIzIXnlEfh6UpAwEoaOs9qsnbErpbRN/v1rj4sm25N4zB9VxOOW0RMe/zjNwEy2HIS/enZu1adS0eqTUdLOPD38C7iL4nMLghWgB5ETcTvo/yENmoh7wR/F+LVmuV7GZaAQZRkocGqWZPQeEFWxpL4WaG36Uz1vREbglfcoDDtFZUq5q7Am4EBn6oU/T5FBiSPXUhiTTpfDc9A65Hl4BOkxJ9fPwnphEOdG+bIiSamhkC55UPv1PY1kty0YMMxwXzQda34WdgZBsiBGSWgA+VtRBSGcXW3Gsnuj1+q0PKByn8gUuNjL83GFPuBwoOzUzWqBk+nfCuW8x1S0/0UNSJ4dVVRiOGZgiopI/De86kIvp09i1JPhNFyM5Zow="
+    # AWS_SECRET_ACCESS_KEY
+    - secure: "RikpP42OjbKCMLQO7jIDUDDdmjkDPR3i9j4IZvrpHlBiw4nnjJePL8yESv8xRHYjwZORQG8I9ejCNpruec42Q7Kjt/UMiYxJdP0rRRgnx8jbQXpWWA8++Fh3kv0CSLjfSuRkvyJjV/09+QmWTBsx1cz1ncpTqgyGgAN/yLFgu91ewcohBSi1pk1c4ITilQlnkmtjkQnNDR5CUX6Vyhl95QNWaTGQQAvVzthZvhaWeG5WNYUDyCg2auzq4hxwtc+geFlQaENV3rBfU899UL71S4UU9CFndMfbPAOLUi5spZsBdUQT8n2xvcsemdQdYPrt29zLPZsBfJiOp77kWp5FHYgG7VLKmPAFXARDi1LatTCVexct6FAt646VvzrYx/lzndDmtWzIinNUAbLFq7FGmDUVEzCqyeL4U3SCDbmVUy4LkO6ELyW/E6tDixlZt2Riqdzhs8kOUJ6fx7WaQKzX26yCQJbfh2Qkcfh2gaLrYVbtStc9S00+sIkIICpMG+szeiIv2t9XQ+Q4Jm2eYU+SynAbKWUBThSIfMRMTq1ozzGRfwffy4NMrAITLwwm1L92yo+5M5eIp0IJK7rOSKiBS1eVTFpZFcPmK+C4T3JAoqFlAn2AfTVqhfl3QRFs8oJoKcvNX2S6Pl8w0y5HK/dmggG4ova57+kSXMh/6cMKWd0="
+before_deploy: "echo \"Uploading build from branch $TRAVIS_BRANCH to S3\""
+deploy:
+  provider: s3
+  access_key_id: "$AWS_ACCESS_KEY_ID"
+  secret_access_key: "$AWS_SECRET_ACCESS_KEY"
+  skip_cleanup: true
+  bucket: "041440807701-us-east-1-device-farm"
+  on:
+    all_branches: true
