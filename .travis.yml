@@ -77,8 +77,7 @@ script:
   - ./travis/build/run.sh
 after_success:
   - ./travis/success/after/aws_cli_configure.sh
-#  - travis_wait 20 ./travis/success/after/aws_device_farm_run.sh
-#  - ./travis/success/after/aws_device_farm_get_results.sh
+  - travis_wait 20 ./travis/success/after/aws_device_farm_run.sh
 env:
   global:
     - JAVA_HOME=/usr/lib/jvm/java-8-oracle

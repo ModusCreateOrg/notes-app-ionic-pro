@@ -23,10 +23,3 @@ cat > "${HOME}"/.aws/credentials << EOL
 aws_access_key_id = ${AWS_ACCESS_KEY_ID}
 aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
 EOL
-
-# Device Farm is only available in region 'us-west-2'
-# See: https://docs.aws.amazon.com/general/latest/gr/rande.html#devicefarm_region
-cat > "${HOME}"/.aws/config << EOL
-[default]
-region = us-west-2
-EOL
