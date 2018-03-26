@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Enhance debugging by expanding and showing shell commands
-# set -x
+set -x
 
 # Credit to Stack Overflow questioner Jiarro and answerer Dave Dopson
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -55,7 +55,7 @@ upload_url="${upload_meta[0]}"
 upload_arn="${upload_meta[1]}"
 
 # TODO: The variable `ANDROID_DEBUG_APK_NAME` will vary depending on how we build.
-curl -T "${ANDROID_DEBUG_APK_NAME}" "${upload_url}"
+curl -T "${ANDROID_BUILD_LATEST_DIR}"/"${ANDROID_DEBUG_APK_NAME}" "${upload_url}"
 
 # Schedule a run
 # TODO: `--test` should come from a config file in an S3 bucket.
