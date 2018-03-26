@@ -74,26 +74,24 @@ before_install:
   - "nvm install 8"
   - "yarn global add ionic cordova"
 script:
-  # Run tests here.
-  - "echo \"Travis branch is $TRAVIS_BRANCH\""
-  - "echo \"Travis branch is in pull request $TRAVIS_PULL_REQUEST\""
   - ./travis/build/run.sh
-after_failure:
-  - "echo \"[FAIL] Build result is $TRAVIS_TEST_RESULT\""
 after_success:
-  - "echo \"[PASS] Build result is $TRAVIS_TEST_RESULT\""
+  - ./travis/success/after/aws_cli_configure.sh
+#  - travis_wait 20 ./travis/success/after/aws_device_farm_run.sh
+#  - ./travis/success/after/aws_device_farm_get_results.sh
 env:
   global:
     - JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
-    - S3_BUCKET="041440807701-us-west-2-device-farm"
+    - S3_BUILD_BUCKET="041440807701-us-west-2-device-farm-builds"
+    - S3_CONFIG_BUCKET="041440807701-us-west-2-device-farm-configs"
     - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
     - ANDROID_DEBUG_APK_NAME="android-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}.apk"
     - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}"/latest
     # AWS_ACCESS_KEY_ID
-    - secure: "BHBfYN2zt0pTk3NYl0+/BREPq6FcAgE03XeoVy3mmwb86YqeFgKWf89ErOJdjVCmCC/1z/fN5nlcS+e/gFKVFCm01pYHMYOyFpvbWVzz/RpWNU273FN2PItNyrhAVf/hIOHcdZYMiXlizaUJe7tPggXfFEFoWpTJGVsPYFpYHt+YAtUeQjx3Io8fDVVrIGIkXwO7uAn8m2sy/nb8npfK3GMTLrGyIVcw9YRK5px1HP1yoEl2/Bm2vnz0L8WSJEvt50m0ftGt9fbxBt5MQXC98BIc3yP8iwRI6LVnI7cnh9WgLWhOvrSH3OuTNvHzb5eLqQkfemsRr+vajb+eJH5fYqNHAM29YCDBO0AFBX8g2Uif58cm3YqJNvs/D3cwyQEWDZsNM/6TevwXlJ651GyJYcqNSZeoQESZkzrGGSs0DZ4xLhGqhCiaKdsUB7e6KBBJXE+ddVotCS1GXUYBHxoMMWc24Oexb3x3mM+jS4V1eepm52pzQzEk/61PeBOOtQCBYEZriTfVT4nitanK7zGy2ctnmwtkGihze63xir/RajsM6wcIsazH0mRQG2SgtX4aeGXDTRMmhXw4bF+BYVU+qHAfz35F8xreYJ4i6fx0YI3OVtCTZcoZHGvff2p0l/QC7MCkE7Wn5YIAhD8IIKKaWcsWVLdSx56gLCMdZlF4aH4="
+    - secure: "dm80T+SAcIyISGYz/HjovwdT3wYHIaRRdVbwoMvsxSqcIqhXlhusztVwjE9eHI44nsLIUGvX8mtkmgwVCVYPocDUlImFtdeX0nnSipSqyKBVtFWBMbFNVZG+UDn7D05YtD64upnt4u5BuKnBjvsCIDokPuDlVjhH3pQZusl1n6AQQv4VDSTUDCoO+GV9nUKcRE9iTiF6HeiekkLOtZFohkF9r4kF821K37y/7OJ+hAJJqJMPwcMfVzfYyX5ITcsLwFfqOscRUevLPWs0bCsTa2tundy9P9yz0S36XwIKaSpDTS+JdkN6AUF1C3JcI67AcoAv6UCDYQ7YX/KaSRRrtbS8n124oJcioNYO8X4stMytB0tCyBIHWaGGYO45W/FIv7upLxE8oj7pn2aZCrqbDTYt7RLGNdsxT2ZxTv32gOsBS2RjuqpL40QqMsBDjwCj+s3rYE7+aTlgjqp8J9+iT7cA663IX0eFuoQELtcVi626LaRQQC+mgH2OZoTOEwVAnXEt0TiMAWh9QvogTpEWJBCiNZYEa7/LqtZ4LO4oJwFZgpR8/4FiuAgZFC16UwALWXEx8Lyc2TMsAzTxLY2mxDiAOCYkJJMKlkujfHqe8HBE053MyLB60/3QKOzYRMbP9jdmBfgxmvtRv9XBhsbMOlhk25WPTlJwS//KIkpAn+s="
     # AWS_SECRET_ACCESS_KEY
-    - secure: "pmiFSEAzwAWkIUd6l1Q8xCpqrOhPXHWqirmIJUP7VBO0xxCDZqpsLtrW3mDceA3ureoqHfMdvZ0FBCYNgao3zgtUys/dVlQTpaAQOQHd1M0U+SHTiVIjICVvCNW0Gr7Y/uhAi6klpMC2PGCbn111rIoeJKn3dSlT+QFDEHN1BBZ2Hlt6b3EZ42KJwrpgxm41RDaZyclQBgysxrlLaAF9g4+ozlJt7cg/FAD326KAmhBRpTEKV08bXCGvOx94tJOjecPmJC/VWh7xNWC5M1HL60T6uA4fTJ3/oPuYkSWwKeQQuQo5fvMowoX5KGqVaNc//I+g4jZdOR5ncdmQJJTQq4MgQKAjWGRRbBAPXaSIboDTlUL57tgL+cHFMA9D6W/k0zDlPdsB7d9X0yS3qalD+U0lxLEmx5uRakCOd2hhOZvrjWg8eomQvfQ/e9Zda6sqLbP3rF3QRrE4ePC/ZFcP1glIMH46fyen/zC2RcaQ/eelNRhwn6hHCI3BEqyWyaqwKMypLC9+ZbZZip/Fi3aoB4PCxxbC6C+Yh7j0U1zuSSRIP1qyjFtizHSPXz4DSLgtz3V57gJ5hDEUXCVoceX+uJH6iRo4wK8Fj+sAZ/ntq54qnntlrB5+fAp+nbR84e+4a3p+4S/WfX4hBESgIxfmH+3SjTUvZx11Mowad0ZFAbw="
+    - secure: "O64Ch2uUrT/d6IoWZ5dc1hMrynw43H5d3fR5x5rqewKr8MXjH8FCUXDLLxXHFGqAnu0yd33wfb0J55MMxuKEJKn573+vMgkUvtQgeZDCkLLAlc1VkmidEHfvbTg/sSht4ECc/AfESNvq2nI9Q/ivWPQJHpn/inIX/sedvLR0HPSnwRdSn+WiHso0mcm4EO3VoO2Bfr+tB2pWdmyBvdmjxmrgxlaUpeV3262v9Bt568IWMj5GES5TNJ+xFWu7bDCw7mFpDa8VonxqFLMyKeE/NfYsu7zz7E801IWy4n0PceCnMBbSb1wbEmuzDXgb9/i6oSnF9oJ7dqHqp+9PbWDmJjFFIyYY56WiOxmr6vbaDYyKsLJuKpO17tQV+Fqhwj13P/sZpMC4qgxNJHQXYNhCXb5c7Q9tb7V1r0Y2CAanJ13SVAdQo+JwOwZGwMUd6J7q2pnPC6ZJhCZAWxo/XTjSjM8SJvHI4vkWmq1PY/M2q7Y52xV2x5d/UhOOvOv7e6FIWWyIOQU7nPT5Jf6Ova4kbr4KMQ/FMaWYsKl31dhOsZfWT063Xj3zE8UzGGHP91rhBNUtbfoPWvmij0vYNflwheOX9JJBQYAFrWV/qIILuu60Ku5+MzIjEY9JcH3heCgjLIq2yILpEgvMFKAD6F6iH1PBiT1rvzK3b5wjSn45RR8="
 before_deploy:
   - ./travis/deploy/before/prepare.sh
 deploy:
@@ -101,10 +99,8 @@ deploy:
   access_key_id: "${AWS_ACCESS_KEY_ID}"
   secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
   skip_cleanup: true
-  bucket: "${S3_BUCKET}"
+  bucket: "${S3_BUILD_BUCKET}"
   local_dir: "${ANDROID_BUILD_LATEST_DIR}"
+  region: us-west-2
   on:
     all_branches: true
-# after_deploy:
-#   - ./travis/deploy/after/run_tests.sh
-#   - ./travis/deploy/after/check_results.sh
