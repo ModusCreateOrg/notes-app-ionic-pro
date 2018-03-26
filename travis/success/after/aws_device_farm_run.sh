@@ -25,6 +25,7 @@ aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM}"-device-pool.yml ./
 
 # Create project
 project_arn=$(aws devicefarm create-project \
+    --name "${ANDROID_DEBUG_APK_NAME}" \
     --query 'project.arn' \
     --output text \
     --region us-west-2)
