@@ -21,7 +21,7 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 fi
 
 # Get our device pool config based on the platform we are building for.
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM}"-device-pool.yml ./
+aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"-device-pool.yml ./
 
 # Create project
 project_arn=$(aws devicefarm create-project \
