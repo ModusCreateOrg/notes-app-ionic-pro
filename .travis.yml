@@ -76,8 +76,8 @@ before_install:
   # v8 is the active LTS release.
   - "nvm install 8"
   - "yarn global add ionic cordova"
-# script:
-#   - ./travis/build/run.sh
+script:
+  - ./travis/build/run.sh
 after_success:
   - ./travis/success/after/aws_cli_configure.sh
   - travis_wait 20 ./travis/success/after/aws_device_farm_run.sh
