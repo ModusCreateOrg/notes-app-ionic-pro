@@ -98,6 +98,16 @@ while [[ $run_status != "COMPLETED" ]]; do
     fi
     progress="${progress}."
 
+
+
+echo "<<<"
+echo "RUN STATUS: $run_status"
+echo "RUN ARN: $run_arn"
+ls -lah "${ANDROID_BUILD_LATEST_DIR}"
+echo ">>>"
+
+
+
     get_run_output=$(get_run "$run_arn")
     run_status=$(echo "$get_run_output" | jq '.[0]')
     # run_arn=$(echo "$get_run_output" | jq '.[1]')
