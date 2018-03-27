@@ -14,8 +14,30 @@ declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-declare PLATFORM
 
+
+
+
+
+
+
+
+
+# BEGIN testing
+mkdir -p "${ANDROID_BUILD_DIR}"
+aws s3 cp s3://041440807701-us-west-2-device-farm-builds/android-debug-10-358404777.apk "${ANDROID_BUILD_DIR}"/android-debug.apk
+# END testing
+
+
+
+
+
+
+
+
+
+
+declare PLATFORM
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
 fi
@@ -74,18 +96,18 @@ get_run() {
     local run_arn
     run_arn=${1}
 
-    IFS=$' ' read -ra run_meta <<< $(aws devicefarm get-run \
+    echo $(aws devicefarm get-run \
         --arn "$run_arn" \
         --query 'run.[status,arn,result,counters]' \
+        --output json \
         --region us-west-2)
-    echo "${run_meta[@]}"
 }
 declare -a get_run_output
 get_run_output=$(get_run "$run_arn")
-run_status=$(echo "$get_run_output" | jq '.[0]')
-run_arn=$(echo "$get_run_output" | jq '.[1]')
-run_result=$(echo "$get_run_output" | jq '.[2]')
-run_overview=$(echo "$get_run_output" | jq '.[3]')
+run_status=$(echo "$get_run_output" | jq -r '.[0]')
+run_arn=$(echo "$get_run_output" | jq -r '.[1]')
+run_result=$(echo "$get_run_output" | jq -r '.[2]')
+run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
 # Credits to Richard Bullington-McGuire (via monitor-deployment.sh in cloud-deployment-scripts)
 echo "########## AWS Device Farm run started"
