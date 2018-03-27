@@ -14,69 +14,61 @@ matrix:
       sudo: false
       # Source: https://docs.travis-ci.com/user/languages/android/
       language: android
-# BEGIN testing
-      # android:
-      #   # If components are missing on build, do `android list sdk --no-ui --all --extended`
-      #   # in local dev environment to find out what's missing.
-      #   components:
-      #     # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
-      #     # See: https://docs.travis-ci.com/user/languages/android/#Installing-a-newer-SDK-Platform-Tools-revision
-      #     - tools
-      #     - platform-tools
-      #     - tools
+      android:
+        # If components are missing on build, do `android list sdk --no-ui --all --extended`
+        # in local dev environment to find out what's missing.
+        components:
+          # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
+          # See: https://docs.travis-ci.com/user/languages/android/#Installing-a-newer-SDK-Platform-Tools-revision
+          - tools
+          - platform-tools
+          - tools
 
-      #     # The BuildTools version used by your project
-      #     - build-tools-26.0.2
+          # The BuildTools version used by your project
+          - build-tools-26.0.2
 
-      #     # The SDK version used to compile your project
-      #     - android-26
+          # The SDK version used to compile your project
+          - android-26
 
-      #     # Additional components
-      #     - extra-google-google_play_services
-      #     - extra-google-m2repository
-      #     - extra-android-m2repository
-      #     - addon-google_apis-google-26
+          # Additional components
+          - extra-google-google_play_services
+          - extra-google-m2repository
+          - extra-android-m2repository
+          - addon-google_apis-google-26
 
-      #     # Specify at least one system image,
-      #     # if you need to run emulator(s) during your tests
-      #     - sys-img-armeabi-v7a-android-26
-      #     - sys-img-armeabi-v7a-android-17
+          # Specify at least one system image,
+          # if you need to run emulator(s) during your tests
+          - sys-img-armeabi-v7a-android-26
+          - sys-img-armeabi-v7a-android-17
 
-      #     # Install Android SDK components.
-      #     - sys-img-armeabi-v7a-android-tv-l
-      #     - add-on
-      #     - extra
-# END testing
+          # Install Android SDK components.
+          - sys-img-armeabi-v7a-android-tv-l
+          - add-on
+          - extra
   addons:
     apt:
-# BEGIN testing
-      # sources:
-      #   - 
-      #     sourceline: "deb https://dl.yarnpkg.com/debian/ stable main"
-      #     key_url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
-# END testing
+      sources:
+        - 
+          sourceline: "deb https://dl.yarnpkg.com/debian/ stable main"
+          key_url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
       packages:
-# BEGIN testing
-        # - oracle-java8-installer
-        # - oracle-java8-set-default
-        # - yarn
-# END testing
+        - oracle-java8-installer
+        - oracle-java8-set-default
+        - yarn
         - jq
   licenses:
     - android-sdk-preview-license-.+
     - android-sdk-license-.+
     - google-gdk-license-.+
-# BEGIN testing
-# before_cache:
-#   - "rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock"
-#   - "rm -fr $HOME/.gradle/caches/*/plugin-resolution/"
-# cache:
-#   directories:
-#     - $HOME/.gradle/caches/
-#     - $HOME/.gradle/wrapper/
-#     - $HOME/.android/build-cache
-#     - $HOME/.cache/yarn
-# END testing
+before_cache:
+  - "rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock"
+  - "rm -fr $HOME/.gradle/caches/*/plugin-resolution/"
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
+    - $HOME/.cache/yarn
 before_install:
   - "export LANG=en_US.UTF-8"
   - "pip install --user awscli"
