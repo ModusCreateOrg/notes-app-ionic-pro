@@ -82,11 +82,11 @@ get_run() {
     echo "${run_meta[@]}"
 }
 declare -a get_run_output
-IFS=$' ' read -ra get_run_output <<< $(get_run "$run_arn")
-run_status="${get_run_output[0]}"
-run_arn="${get_run_output[1]}"
-run_result="${get_run_output[2]}"
-run_overview="${get_run_output[3]}"
+get_run_output=$(get_run "$run_arn")
+run_status=$(echo "$get_run_output" | jq '.[0]')
+run_arn=$(echo "$get_run_output" | jq '.[1]')
+run_result=$(echo "$get_run_output" | jq '.[2]')
+run_overview=$(echo "$get_run_output" | jq '.[3]')
 
 # Credits to Richard Bullington-McGuire (via monitor-deployment.sh in cloud-deployment-scripts)
 echo "########## AWS Device Farm run started"
@@ -100,10 +100,11 @@ while [[ $run_status != "COMPLETED" ]]; do
     fi
     progress="${progress}."
 
-    IFS=$' ' read -ra schedule_run_output <<< $(schedule_run "$project_arn" "$device_pool_arn" "$upload_arn")
-    run_status="${schedule_run_output[0]}"
-    run_arn="${schedule_run_output[1]}"
-    run_result="${schedule_run_output[2]}"
+    get_run_output=$(get_run "$run_arn")
+    run_status=$(echo "$get_run_output" | jq '.[0]')
+    run_arn=$(echo "$get_run_output" | jq '.[1]')
+    run_result=$(echo "$get_run_output" | jq '.[2]')
+    run_overview=$(echo "$get_run_output" | jq '.[3]')
 
     # Skip rewinding output if we are running under Travis,
     # the hint there is that TRAVIS will be defined
@@ -118,7 +119,7 @@ echo "########## Test runs done with result \"$run_result\""
 
 results=$(aws devicefarm list-jobs \
     --arn "$run_arn" \
-    --output text \
+    --output json \
     --region us-west-2)
 
 # TODO: Maybe upload this to S3?
@@ -126,5 +127,5 @@ echo "$results"
 
 aws devicefarm delete-project \
     --arn "${project_arn}" \
-    --output text \
+    --output json \
     --region us-west-2

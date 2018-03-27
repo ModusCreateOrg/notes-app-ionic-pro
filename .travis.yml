@@ -55,6 +55,7 @@ matrix:
         - oracle-java8-installer
         - oracle-java8-set-default
         - yarn
+        - jq
   licenses:
     - android-sdk-preview-license-.+
     - android-sdk-license-.+
