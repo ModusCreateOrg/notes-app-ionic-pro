@@ -83,8 +83,8 @@ before_install:
   - "export PATH=$PATH:$HOME/.local/bin"
 # BEGIN testing
   # v8 is the active LTS release.
-  - "nvm install 8"
-  - "yarn global add ionic cordova"
+  # - "nvm install 8"
+  # - "yarn global add ionic cordova"
 # script:
 #   - ./travis/build/run.sh
 # END testing
