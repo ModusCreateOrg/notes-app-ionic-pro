@@ -98,19 +98,6 @@ while [[ $run_status != "COMPLETED" ]]; do
         sleep 5
     fi
     progress="${progress}."
-
-
-
-echo "<<<"
-echo "RUN STATUS: $run_status"
-echo "RUN ARN: $run_arn"
-ls -lah "${ANDROID_BUILD_DIR}"
-echo '---'
-ls -lah "${ANDROID_BUILD_LATEST_DIR}"
-echo ">>>"
-
-
-
     get_run_output=$(get_run "$run_arn")
     run_status=$(echo "$get_run_output" | jq -r '.[0]')
     # run_arn=$(echo "$get_run_output" | jq '.[1]')
@@ -128,6 +115,7 @@ done
 
 echo "########## Test runs done with result \"$run_result\""
 
+# TODO: Show more info like: https://aws.amazon.com/blogs/mobile/get-started-with-the-aws-device-farm-cli-and-calabash-part-2-retrieving-reports-and-artifacts/
 results=$(aws devicefarm list-jobs \
     --arn "$run_arn" \
     --output json \
