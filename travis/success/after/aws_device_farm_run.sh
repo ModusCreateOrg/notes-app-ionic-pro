@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Enhance debugging by expanding and showing shell commands
-set -x
+# set -x
 
 # Credit to Stack Overflow questioner Jiarro and answerer Dave Dopson
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -13,30 +13,6 @@ set -x
 declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-
-
-
-
-
-
-
-
-
-
-# BEGIN testing
-mkdir -p "${ANDROID_BUILD_DIR}"
-aws s3 cp s3://041440807701-us-west-2-device-farm-builds/android-debug-10-358404777.apk "${ANDROID_BUILD_DIR}"/android-debug.apk
-# END testing
-
-
-
-
-
-
-
-
-
 
 declare PLATFORM
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -106,7 +82,7 @@ get_run() {
 declare -a get_run_output
 get_run_output=$(get_run "$run_arn")
 run_status=$(echo "$get_run_output" | jq -r '.[0]')
-run_arn=$(echo "$get_run_output" | jq -r '.[1]')
+# run_arn=$(echo "$get_run_output" | jq -r '.[1]')
 run_result=$(echo "$get_run_output" | jq -r '.[2]')
 run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
@@ -124,7 +100,7 @@ while [[ $run_status != "COMPLETED" ]]; do
 
     get_run_output=$(get_run "$run_arn")
     run_status=$(echo "$get_run_output" | jq '.[0]')
-    run_arn=$(echo "$get_run_output" | jq '.[1]')
+    # run_arn=$(echo "$get_run_output" | jq '.[1]')
     run_result=$(echo "$get_run_output" | jq '.[2]')
     run_overview=$(echo "$get_run_output" | jq '.[3]')
 
