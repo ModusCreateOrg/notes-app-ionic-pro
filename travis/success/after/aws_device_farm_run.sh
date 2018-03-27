@@ -23,6 +23,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 
 
+
 # BEGIN testing
 mkdir -p "${ANDROID_BUILD_DIR}"
 aws s3 cp s3://041440807701-us-west-2-device-farm-builds/android-debug-10-358404777.apk "${ANDROID_BUILD_DIR}"/android-debug.apk
