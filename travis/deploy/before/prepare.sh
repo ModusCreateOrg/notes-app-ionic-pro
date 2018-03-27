@@ -17,19 +17,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # TODO: Use `aws iam get-user` to display more info.
 echo "Uploading build from branch '$TRAVIS_BRANCH' to S3 bucket '$S3_BUILD_BUCKET'"
 
-
-echo "<<<"
-echo "TRAVIS_BUILD_DIR: ${TRAVIS_BUILD_DIR}"
-ls -lah "${TRAVIS_BUILD_DIR}"
-echo '---'
-echo "ANDROID_BUILD_DIR: ${ANDROID_BUILD_DIR}"
-ls -lah "${ANDROID_BUILD_DIR}"
-echo '---'
-echo "ANDROID_BUILD_LATEST_DIR: ${ANDROID_BUILD_LATEST_DIR}"
-ls -lah "${ANDROID_BUILD_LATEST_DIR}"
-echo ">>>"
-
-
 rm -rf "${ANDROID_BUILD_LATEST_DIR}"
 mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
 

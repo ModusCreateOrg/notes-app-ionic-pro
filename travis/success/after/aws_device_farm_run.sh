@@ -124,7 +124,16 @@ results=$(aws devicefarm list-jobs \
 # TODO: Maybe upload this to S3?
 echo "$results"
 
-aws devicefarm delete-project \
-    --arn "${project_arn}" \
-    --output json \
-    --region us-west-2
+
+
+
+
+
+
+
+
+
+# aws devicefarm delete-project \
+#     --arn "${project_arn}" \
+#     --output json \
+#     --region us-west-2
