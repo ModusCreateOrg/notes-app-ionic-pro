@@ -77,7 +77,6 @@ get_run() {
     IFS=$' ' read -ra run_meta <<< $(aws devicefarm get-run \
         --arn "$run_arn" \
         --query 'run.[status,arn,result,counters]' \
-        --output text \
         --region us-west-2)
     echo "${run_meta[@]}"
 }
