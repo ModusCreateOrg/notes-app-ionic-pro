@@ -73,11 +73,11 @@ get_run() {
     local run_arn
     run_arn=${1}
 
-    echo $(aws devicefarm get-run \
+    aws devicefarm get-run \
         --arn "$run_arn" \
         --query 'run.[status,arn,result,counters]' \
         --output json \
-        --region us-west-2)
+        --region us-west-2
 }
 declare -a get_run_output
 get_run_output=$(get_run "$run_arn")
