@@ -91,6 +91,7 @@ echo "########## AWS Device Farm run started"
 echo ""
 progress=""
 output=""
+# TODO: Check to see if I should checking for other run_status types
 # See: https://docs.aws.amazon.com/cli/latest/reference/devicefarm/schedule-run.html#output
 while [[ $run_status != "COMPLETED" ]]; do
     if [[ -n "$output" ]]; then
@@ -103,16 +104,18 @@ while [[ $run_status != "COMPLETED" ]]; do
 echo "<<<"
 echo "RUN STATUS: $run_status"
 echo "RUN ARN: $run_arn"
+ls -lah "${ANDROID_BUILD_DIR}"
+echo '---'
 ls -lah "${ANDROID_BUILD_LATEST_DIR}"
 echo ">>>"
 
 
 
     get_run_output=$(get_run "$run_arn")
-    run_status=$(echo "$get_run_output" | jq '.[0]')
+    run_status=$(echo "$get_run_output" | jq -r '.[0]')
     # run_arn=$(echo "$get_run_output" | jq '.[1]')
-    run_result=$(echo "$get_run_output" | jq '.[2]')
-    run_overview=$(echo "$get_run_output" | jq '.[3]')
+    run_result=$(echo "$get_run_output" | jq -r '.[2]')
+    run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
     # Skip rewinding output if we are running under Travis,
     # the hint there is that TRAVIS will be defined
