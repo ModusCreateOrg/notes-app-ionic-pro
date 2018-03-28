@@ -6,6 +6,19 @@ branches:
     - feature/travis-build-integration
 git:
   depth: 1
+env:
+  global:
+    - JAVA_HOME=/usr/lib/jvm/java-8-oracle
+    - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
+    - S3_BUILD_BUCKET="041440807701-us-west-2-device-farm-builds"
+    - S3_CONFIG_BUCKET="041440807701-us-west-2-device-farm-configs"
+    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
+    - ANDROID_DEBUG_APK_NAME="android-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
+    - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
+    # AWS_ACCESS_KEY_ID
+    - secure: "dm80T+SAcIyISGYz/HjovwdT3wYHIaRRdVbwoMvsxSqcIqhXlhusztVwjE9eHI44nsLIUGvX8mtkmgwVCVYPocDUlImFtdeX0nnSipSqyKBVtFWBMbFNVZG+UDn7D05YtD64upnt4u5BuKnBjvsCIDokPuDlVjhH3pQZusl1n6AQQv4VDSTUDCoO+GV9nUKcRE9iTiF6HeiekkLOtZFohkF9r4kF821K37y/7OJ+hAJJqJMPwcMfVzfYyX5ITcsLwFfqOscRUevLPWs0bCsTa2tundy9P9yz0S36XwIKaSpDTS+JdkN6AUF1C3JcI67AcoAv6UCDYQ7YX/KaSRRrtbS8n124oJcioNYO8X4stMytB0tCyBIHWaGGYO45W/FIv7upLxE8oj7pn2aZCrqbDTYt7RLGNdsxT2ZxTv32gOsBS2RjuqpL40QqMsBDjwCj+s3rYE7+aTlgjqp8J9+iT7cA663IX0eFuoQELtcVi626LaRQQC+mgH2OZoTOEwVAnXEt0TiMAWh9QvogTpEWJBCiNZYEa7/LqtZ4LO4oJwFZgpR8/4FiuAgZFC16UwALWXEx8Lyc2TMsAzTxLY2mxDiAOCYkJJMKlkujfHqe8HBE053MyLB60/3QKOzYRMbP9jdmBfgxmvtRv9XBhsbMOlhk25WPTlJwS//KIkpAn+s="
+    # AWS_SECRET_ACCESS_KEY
+    - secure: "O64Ch2uUrT/d6IoWZ5dc1hMrynw43H5d3fR5x5rqewKr8MXjH8FCUXDLLxXHFGqAnu0yd33wfb0J55MMxuKEJKn573+vMgkUvtQgeZDCkLLAlc1VkmidEHfvbTg/sSht4ECc/AfESNvq2nI9Q/ivWPQJHpn/inIX/sedvLR0HPSnwRdSn+WiHso0mcm4EO3VoO2Bfr+tB2pWdmyBvdmjxmrgxlaUpeV3262v9Bt568IWMj5GES5TNJ+xFWu7bDCw7mFpDa8VonxqFLMyKeE/NfYsu7zz7E801IWy4n0PceCnMBbSb1wbEmuzDXgb9/i6oSnF9oJ7dqHqp+9PbWDmJjFFIyYY56WiOxmr6vbaDYyKsLJuKpO17tQV+Fqhwj13P/sZpMC4qgxNJHQXYNhCXb5c7Q9tb7V1r0Y2CAanJ13SVAdQo+JwOwZGwMUd6J7q2pnPC6ZJhCZAWxo/XTjSjM8SJvHI4vkWmq1PY/M2q7Y52xV2x5d/UhOOvOv7e6FIWWyIOQU7nPT5Jf6Ova4kbr4KMQ/FMaWYsKl31dhOsZfWT063Xj3zE8UzGGHP91rhBNUtbfoPWvmij0vYNflwheOX9JJBQYAFrWV/qIILuu60Ku5+MzIjEY9JcH3heCgjLIq2yILpEgvMFKAD6F6iH1PBiT1rvzK3b5wjSn45RR8="
 matrix:
   include:
     -
@@ -60,6 +73,17 @@ matrix:
     - android-sdk-preview-license-.+
     - android-sdk-license-.+
     - google-gdk-license-.+
+before_install:
+  - rm -rf "${ANDROID_BUILD_LATEST_DIR}"
+  - mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
+  - "export LANG=en_US.UTF-8"
+  - "pip install --user awscli"
+  - "export PATH=$PATH:$HOME/.local/bin"
+  # v8 is the active LTS release.
+  - "nvm install 8"
+  - "yarn global add ionic cordova"
+script:
+  - ./travis/build/run.sh
 before_cache:
   - "rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock"
   - "rm -fr $HOME/.gradle/caches/*/plugin-resolution/"
@@ -69,31 +93,9 @@ cache:
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
     - $HOME/.cache/yarn
-before_install:
-  - "export LANG=en_US.UTF-8"
-  - "pip install --user awscli"
-  - "export PATH=$PATH:$HOME/.local/bin"
-  # v8 is the active LTS release.
-  - "nvm install 8"
-  - "yarn global add ionic cordova"
-script:
-  - ./travis/build/run.sh
 after_success:
   - ./travis/success/after/aws_cli_configure.sh
   - ./travis/success/after/aws_device_farm_run.sh
-env:
-  global:
-    - JAVA_HOME=/usr/lib/jvm/java-8-oracle
-    - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
-    - S3_BUILD_BUCKET="041440807701-us-west-2-device-farm-builds"
-    - S3_CONFIG_BUCKET="041440807701-us-west-2-device-farm-configs"
-    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
-    - ANDROID_DEBUG_APK_NAME="android-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
-    - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
-    # AWS_ACCESS_KEY_ID
-    - secure: "dm80T+SAcIyISGYz/HjovwdT3wYHIaRRdVbwoMvsxSqcIqhXlhusztVwjE9eHI44nsLIUGvX8mtkmgwVCVYPocDUlImFtdeX0nnSipSqyKBVtFWBMbFNVZG+UDn7D05YtD64upnt4u5BuKnBjvsCIDokPuDlVjhH3pQZusl1n6AQQv4VDSTUDCoO+GV9nUKcRE9iTiF6HeiekkLOtZFohkF9r4kF821K37y/7OJ+hAJJqJMPwcMfVzfYyX5ITcsLwFfqOscRUevLPWs0bCsTa2tundy9P9yz0S36XwIKaSpDTS+JdkN6AUF1C3JcI67AcoAv6UCDYQ7YX/KaSRRrtbS8n124oJcioNYO8X4stMytB0tCyBIHWaGGYO45W/FIv7upLxE8oj7pn2aZCrqbDTYt7RLGNdsxT2ZxTv32gOsBS2RjuqpL40QqMsBDjwCj+s3rYE7+aTlgjqp8J9+iT7cA663IX0eFuoQELtcVi626LaRQQC+mgH2OZoTOEwVAnXEt0TiMAWh9QvogTpEWJBCiNZYEa7/LqtZ4LO4oJwFZgpR8/4FiuAgZFC16UwALWXEx8Lyc2TMsAzTxLY2mxDiAOCYkJJMKlkujfHqe8HBE053MyLB60/3QKOzYRMbP9jdmBfgxmvtRv9XBhsbMOlhk25WPTlJwS//KIkpAn+s="
-    # AWS_SECRET_ACCESS_KEY
-    - secure: "O64Ch2uUrT/d6IoWZ5dc1hMrynw43H5d3fR5x5rqewKr8MXjH8FCUXDLLxXHFGqAnu0yd33wfb0J55MMxuKEJKn573+vMgkUvtQgeZDCkLLAlc1VkmidEHfvbTg/sSht4ECc/AfESNvq2nI9Q/ivWPQJHpn/inIX/sedvLR0HPSnwRdSn+WiHso0mcm4EO3VoO2Bfr+tB2pWdmyBvdmjxmrgxlaUpeV3262v9Bt568IWMj5GES5TNJ+xFWu7bDCw7mFpDa8VonxqFLMyKeE/NfYsu7zz7E801IWy4n0PceCnMBbSb1wbEmuzDXgb9/i6oSnF9oJ7dqHqp+9PbWDmJjFFIyYY56WiOxmr6vbaDYyKsLJuKpO17tQV+Fqhwj13P/sZpMC4qgxNJHQXYNhCXb5c7Q9tb7V1r0Y2CAanJ13SVAdQo+JwOwZGwMUd6J7q2pnPC6ZJhCZAWxo/XTjSjM8SJvHI4vkWmq1PY/M2q7Y52xV2x5d/UhOOvOv7e6FIWWyIOQU7nPT5Jf6Ova4kbr4KMQ/FMaWYsKl31dhOsZfWT063Xj3zE8UzGGHP91rhBNUtbfoPWvmij0vYNflwheOX9JJBQYAFrWV/qIILuu60Ku5+MzIjEY9JcH3heCgjLIq2yILpEgvMFKAD6F6iH1PBiT1rvzK3b5wjSn45RR8="
 before_deploy:
   - ./travis/deploy/before/prepare.sh
 # This step uploads the .apk as well as the test artifacts.
