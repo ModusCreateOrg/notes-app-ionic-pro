@@ -132,9 +132,6 @@ results=$(aws devicefarm list-jobs \
 # TODO: Maybe upload this to S3?
 echo "JOBS: $results"
 
-rm -rf "${ANDROID_BUILD_LATEST_DIR}"
-mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
-
 # Download test artifacts. S3 will upload it in the `deploy` step.
 COUNTER=0
 for type in FILE SCREENSHOT; do

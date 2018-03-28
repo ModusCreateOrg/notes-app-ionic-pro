@@ -14,6 +14,9 @@ declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+rm -rf "${ANDROID_BUILD_LATEST_DIR}"
+mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
+
 yarn install
 ionic cordova platform add android --nofetch
 ionic cordova build android
