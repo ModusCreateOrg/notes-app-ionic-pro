@@ -15,5 +15,5 @@ declare DIR
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 yarn install
-ionic cordova platform add android --nofetch
+ionic cordova platform add android@latest --nofetch
 ionic cordova build android
