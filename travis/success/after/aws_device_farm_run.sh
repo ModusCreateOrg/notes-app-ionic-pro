@@ -14,6 +14,8 @@ declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+. "$DIR/../../common.sh"
+
 declare PLATFORM
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
@@ -24,7 +26,7 @@ aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"-device-pool.json ./
 
 # Create project
 project_arn=$(aws devicefarm create-project \
-    --name "${ANDROID_DEBUG_APK_NAME}" \
+    --name "${ANDROID_DEBUG_APK_NAME}".apk \
     --query 'project.arn' \
     --output text \
     --region us-west-2)
@@ -44,7 +46,7 @@ cd "${ANDROID_BUILD_LATEST_DIR}"
 # Create an upload
 # TODO: `type` should not be hard coded.
 IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
-    --name "${ANDROID_DEBUG_APK_NAME}" \
+    --name "${ANDROID_DEBUG_APK_NAME}".apk \
     --type ANDROID_APP \
     --project-arn "${project_arn}" \
     --query 'upload.[url,arn]' \
@@ -53,7 +55,7 @@ IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
 upload_url="${upload_meta[0]}"
 upload_arn="${upload_meta[1]}"
 
-# TODO: The variable `ANDROID_DEBUG_APK_NAME` will vary depending on how we build.
+# TODO: The file to be uploaded will vary depending on how we build and the platform.
 curl -T "${ANDROID_BUILD_DIR}"/android-debug.apk "${upload_url}"
 
 # Schedule a run
@@ -92,7 +94,7 @@ echo ""
 progress=""
 output=""
 # TODO: Check to see if I should checking for other run_status types
-# See: https://docs.aws.amazon.com/cli/latest/reference/devicefarm/schedule-run.html#output
+# See: https://docs.aws.amazon.com/cli/latest/reference/devicefarm/get-run.html#output
 while [[ $run_status != "COMPLETED" ]]; do
     if [[ -n "$output" ]]; then
         sleep 5
@@ -112,8 +114,14 @@ while [[ $run_status != "COMPLETED" ]]; do
     output=$(printf "%s\n%s" "$progress" "$run_overview")
     echo "$output"
 done
-
 echo "########## Test runs done with result \"$run_result\""
+
+# TODO: Test this
+# Fail the build if it doesn't pass.
+if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
+    echo "Terminating build"
+    exit 1
+fi
 
 # TODO: Show more info like: https://aws.amazon.com/blogs/mobile/get-started-with-the-aws-device-farm-cli-and-calabash-part-2-retrieving-reports-and-artifacts/
 results=$(aws devicefarm list-jobs \
@@ -122,18 +130,33 @@ results=$(aws devicefarm list-jobs \
     --region us-west-2)
 
 # TODO: Maybe upload this to S3?
-echo "$results"
+echo "JOBS: $results"
 
+rm -rf "${ANDROID_BUILD_LATEST_DIR}"
+mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
 
+# Download test artifacts. S3 will upload it in the `deploy` step.
+COUNTER=0
+for type in FILE SCREENSHOT; do
+    while read i; do
+        artifact_url=$(echo "$i" | jq -r '.url')
+        artifact_type=$(echo "$i" | jq -r '.type')
+        artifact_ext=$(echo "$i" | jq -r '.extension')
+        artifact_name=$(echo "$i" | jq -r '.name')
+        artifact_filename="${artifact_name}-${RANDOM}.${artifact_ext}"
 
+        mkdir -p "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}"
+        set +e
+        try_with_backoff wget -O "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}/${artifact_filename}" "${artifact_url}"
+        set -e
+        let COUNTER=COUNTER+1
+    done < <(aws devicefarm list-artifacts \
+        --arn "$run_arn" \
+        --type "$type" \
+        | jq -cr '.[] | .[] | {url: .url, type: .type, extension: .extension, name: .name}')
+done
 
-
-
-
-
-
-
-# aws devicefarm delete-project \
-#     --arn "${project_arn}" \
-#     --output json \
-#     --region us-west-2
+aws devicefarm delete-project \
+    --arn "${project_arn}" \
+    --output json \
+    --region us-west-2
