@@ -16,14 +16,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . "$DIR/../../common.sh"
 
-echo "<<<"
-echo "ANDROID_BUILD_DIR:"
-ls -lah "${ANDROID_BUILD_DIR}"
-echo "---"
-echo "ANDROID_BUILD_LATEST_DIR:"
-ls -lah "${ANDROID_BUILD_LATEST_DIR}"
-echo ">>>"
-
 declare PLATFORM
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
@@ -64,7 +56,7 @@ upload_url="${upload_meta[0]}"
 upload_arn="${upload_meta[1]}"
 
 # TODO: The file to be uploaded will vary depending on how we build and the platform.
-curl -T "${ANDROID_BUILD_DIR}"/android-debug.apk "${upload_url}"
+curl -T "${ANDROID_BUILD_DIR}"/app-debug.apk "${upload_url}"
 
 # Schedule a run
 # TODO: `--test` should come from a config file in an S3 bucket.
@@ -145,7 +137,7 @@ echo "JOBS: $results"
 rm -rf "${ANDROID_BUILD_LATEST_DIR}"
 mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
 mv \
-    "${ANDROID_BUILD_DIR}"/android-debug.apk \
+    "${ANDROID_BUILD_DIR}"/app-debug.apk \
     "${ANDROID_BUILD_LATEST_DIR}"/"${ANDROID_DEBUG_APK_NAME}".apk
 
 # Download test artifacts. S3 will upload it in the `deploy` step.
