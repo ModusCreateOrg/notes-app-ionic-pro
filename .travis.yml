@@ -75,11 +75,13 @@ matrix:
     - google-gdk-license-.+
 before_install:
   - "export LANG=en_US.UTF-8"
-  - "pip install --user awscli"
   - "export PATH=$PATH:$HOME/.local/bin"
+  - pip install --user awscli
+  - pip install jinja2-cli
+install:
   # v8 is the active LTS release.
-  - "nvm install 8"
-  - "yarn global add ionic cordova"
+  - nvm install 8
+  - yarn global add ionic cordova
 script:
   - ./travis/build/run.sh
 before_cache:

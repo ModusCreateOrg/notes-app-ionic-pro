@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Enhance debugging by expanding and showing shell commands
-# set -x
+set -x
 
 # Credit to Stack Overflow questioner Jiarro and answerer Dave Dopson
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -21,8 +21,9 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
 fi
 
-# Get our device pool config based on the platform we are building for.
+# Get our configs from S3
 aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"-device-pool.json ./
+aws s3 cp s3://"${S3_CONFIG_BUCKET}"/test-BUILTIN_EXPLORER.jinja2 ./
 
 # Create project
 project_arn=$(aws devicefarm create-project \
@@ -59,13 +60,18 @@ upload_arn="${upload_meta[1]}"
 curl -T "${ANDROID_BUILD_DIR}"/app-debug.apk "${upload_url}"
 
 # Schedule a run
-# TODO: `--test` should come from a config file in an S3 bucket.
+test_file=$(cat ./test-BUILTIN_EXPLORER.jinja2)
+test_file=$(jinja2 \
+    "$test_file" \
+    "{\"upload_arn\":\"$upload_arn\"}" \
+    --format=json \
+    > "./test_file.json")
 run_arn=$(aws devicefarm schedule-run \
         --project-arn "${project_arn}" \
         --app-arn "${upload_arn}" \
         --device-pool-arn "${device_pool_arn}" \
         --name "${TRAVIS_COMMIT_MESSAGE}" \
-        --test '{"type":"BUILTIN_EXPLORER","testPackageArn":"'"${upload_arn}"'"}' \
+        --test ./test_file.json \
         --query 'run.arn' \
         --output text \
         --region us-west-2)
