@@ -158,6 +158,8 @@ for type in FILE SCREENSHOT; do
     done < <(aws devicefarm list-artifacts \
         --arn "$run_arn" \
         --type "$type" \
+        --output json \
+        --region us-west-2 \
         | jq -cr '.[] | .[] | {url: .url, type: .type, extension: .extension, name: .name}')
 done
 
