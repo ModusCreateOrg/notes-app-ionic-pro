@@ -21,9 +21,10 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
 fi
 
+config_dir=$(mktemp -d)
 # Get our configs from S3
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"-device-pool.json ./
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/test-BUILTIN_EXPLORER.jinja2 ./
+aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"-device-pool.json "${config_dir}"/"${PLATFORM,,}"-device-pool.json
+aws s3 cp s3://"${S3_CONFIG_BUCKET}"/test-BUILTIN_EXPLORER.jinja2 "${config_dir}"/test-BUILTIN_EXPLORER.jinja2
 
 # Create project
 project_arn=$(aws devicefarm create-project \
@@ -36,7 +37,7 @@ project_arn=$(aws devicefarm create-project \
 device_pool_arn=$(aws devicefarm create-device-pool \
     --project-arn "${project_arn}" \
     --name "${PLATFORM,,}"-devices \
-    --rules file://./"${PLATFORM,,}"-device-pool.json \
+    --rules file://"${config_dir}"/"${PLATFORM,,}"-device-pool.json \
     --query 'devicePool.arn' \
     --output text \
     --region us-west-2)
@@ -60,7 +61,7 @@ upload_arn="${upload_meta[1]}"
 curl -T "${ANDROID_BUILD_DIR}"/app-debug.apk "${upload_url}"
 
 # Schedule a run
-test_file=$(cat ./test-BUILTIN_EXPLORER.jinja2)
+test_file=$(cat "${config_dir}"/test-BUILTIN_EXPLORER.jinja2)
 test_file=$(jinja2 \
     "$test_file" \
     "{\"upload_arn\":\"$upload_arn\"}" \
