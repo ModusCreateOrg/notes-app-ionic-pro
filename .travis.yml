@@ -77,7 +77,7 @@ before_install:
   - "export LANG=en_US.UTF-8"
   - "export PATH=$PATH:$HOME/.local/bin"
   - pip install --user awscli
-  - pip install jinja2-cli
+  - pip install --user jinja2-cli
 install:
   # v8 is the active LTS release.
   - nvm install 8
