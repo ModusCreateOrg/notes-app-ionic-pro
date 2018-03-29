@@ -12,7 +12,7 @@ env:
     - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
     - S3_BUILD_BUCKET="041440807701-us-west-2-device-farm-builds"
     - S3_CONFIG_BUCKET="041440807701-us-west-2-device-farm-configs"
-    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
+    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/app/build/outputs/apk/debug"
     - ANDROID_DEBUG_APK_NAME="android-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
     - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
     # AWS_ACCESS_KEY_ID
@@ -93,6 +93,7 @@ cache:
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
     - $HOME/.cache/yarn
+    - $HOME/.cache/pip
 after_success:
   - ./travis/success/after/aws_cli_configure.sh
   - ./travis/success/after/aws_device_farm_run.sh

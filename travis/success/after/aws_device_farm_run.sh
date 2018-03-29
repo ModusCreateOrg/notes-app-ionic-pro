@@ -16,12 +16,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . "$DIR/../../common.sh"
 
-
-ls -lah "ANDROID_BUILD_DIR: ${ANDROID_BUILD_DIR}"
-echo '====='
-ls -lah "ANDROID_BUILD_LATEST_DIR: ${ANDROID_BUILD_LATEST_DIR}"
-
-
 declare PLATFORM
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
