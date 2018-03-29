@@ -74,8 +74,6 @@ matrix:
     - android-sdk-license-.+
     - google-gdk-license-.+
 before_install:
-  - rm -rf "${ANDROID_BUILD_LATEST_DIR}"
-  - mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
   - "export LANG=en_US.UTF-8"
   - "pip install --user awscli"
   - "export PATH=$PATH:$HOME/.local/bin"
@@ -97,8 +95,6 @@ cache:
 after_success:
   - ./travis/success/after/aws_cli_configure.sh
   - ./travis/success/after/aws_device_farm_run.sh
-before_deploy:
-  - ./travis/deploy/before/prepare.sh
 # This step uploads the .apk as well as the test artifacts.
 deploy:
   provider: s3

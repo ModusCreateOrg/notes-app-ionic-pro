@@ -41,12 +41,12 @@ device_pool_arn=$(aws devicefarm create-device-pool \
     --region us-west-2)
 
 # TODO: This var will vary depending on the paltform we are building for.
-cd "${ANDROID_BUILD_LATEST_DIR}"
+cd "${ANDROID_BUILD_DIR}"
 
 # Create an upload
 # TODO: `type` should not be hard coded.
 IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
-    --name "${ANDROID_DEBUG_APK_NAME}".apk \
+    --name "app-debug.apk" \
     --type ANDROID_APP \
     --project-arn "${project_arn}" \
     --query 'upload.[url,arn]' \
@@ -131,6 +131,14 @@ results=$(aws devicefarm list-jobs \
 
 # TODO: Maybe upload this to S3?
 echo "JOBS: $results"
+
+# Move the .apk file to a dir on its own since the entire dir will be uploaded
+# to the S3 bucket.
+rm -rf "${ANDROID_BUILD_LATEST_DIR}"
+mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
+mv \
+    "${ANDROID_BUILD_DIR}"/android-debug.apk \
+    "${ANDROID_BUILD_LATEST_DIR}"/"${ANDROID_DEBUG_APK_NAME}".apk
 
 # Download test artifacts. S3 will upload it in the `deploy` step.
 COUNTER=0
