@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Enhance debugging by expanding and showing shell commands
-set -x
+# set -x
 
 # Credit to Stack Overflow questioner Jiarro and answerer Dave Dopson
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -73,7 +73,7 @@ run_arn=$(aws devicefarm schedule-run \
 # Get info on a run
 get_run() {
     local run_arn
-    run_arn=${1}
+    run_arn="${1}"
 
     aws devicefarm get-run \
         --arn "$run_arn" \
