@@ -61,18 +61,17 @@ upload_arn="${upload_meta[1]}"
 curl -T "${ANDROID_BUILD_DIR}"/app-debug.apk "${upload_url}"
 
 # Schedule a run
-test_file=$(cat "${config_dir}"/test-BUILTIN_EXPLORER.jinja2)
+echo "{\"upload_arn\":\"$upload_arn\"}" > "${config_dir}"/upload_arn.json
 test_file=$(jinja2 \
-    "$test_file" \
-    "{\"upload_arn\":\"$upload_arn\"}" \
-    --format=json \
-    > "./test_file.json")
+    "${config_dir}"/test-BUILTIN_EXPLORER.jinja2 \
+    "${config_dir}"/upload_arn.json \
+    --format=json)
 run_arn=$(aws devicefarm schedule-run \
         --project-arn "${project_arn}" \
         --app-arn "${upload_arn}" \
         --device-pool-arn "${device_pool_arn}" \
         --name "${TRAVIS_COMMIT_MESSAGE}" \
-        --test ./test_file.json \
+        --test "$test_file" \
         --query 'run.arn' \
         --output text \
         --region us-west-2)
