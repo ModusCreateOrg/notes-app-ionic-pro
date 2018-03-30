@@ -105,6 +105,6 @@ deploy:
   skip_cleanup: true
   bucket: "${S3_BUILD_BUCKET}"
   local_dir: "${ANDROID_BUILD_LATEST_DIR}"
-  region: us-west-2
+  region: us-east-1
   on:
     all_branches: true
