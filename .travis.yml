@@ -12,7 +12,7 @@ env:
 #    - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
     - S3_BUILD_BUCKET="device-farm-builds-976851222302"
     - S3_CONFIG_BUCKET="device-farm-configs-976851222302"
-    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/app/build/outputs/apk/debug"
+    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
     - ANDROID_DEBUG_APK_NAME="app-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
     - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
     # AWS_ACCESS_KEY_ID
