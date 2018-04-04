@@ -14,14 +14,18 @@ declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+sudo apt-get purge nodejs && sudo apt-get autoremove && sudo apt-get autoclean
+
 # Source: http://yoember.com/nodejs/the-best-way-to-install-node-js/#on-linux
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
 
 ls -lah ~/.nvm/
 
 # v8 is the active LTS release.
-bash -c "nvm use 8" || true
-bash -c "source $HOME/.nvm/nvm.sh; nvm install 8; node --version"
+nvm use 8 || true
+source $HOME/.nvm/nvm.sh
+nvm install 8
+node --version
 
 # Increase the amount of inotify watches.
 echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
