@@ -13,7 +13,7 @@ IFS=$'\n\t'
 declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$DIR/common.sh"
+source "$DIR/../common.sh"
 
 use_nodejs 8
 
