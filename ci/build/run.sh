@@ -14,6 +14,8 @@ declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+use_nodejs 8
+
 yarn install
 # TODO: Figure out why we have to remove android and add it for this to work.
 # See: https://travis-ci.org/ModusCreateOrg/notes-app-ionic-pro/builds/359512339#L3329
