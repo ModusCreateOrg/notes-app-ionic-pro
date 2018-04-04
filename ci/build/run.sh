@@ -17,6 +17,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 yarn install
 # TODO: Figure out why we have to remove android and add it for this to work.
 # See: https://travis-ci.org/ModusCreateOrg/notes-app-ionic-pro/builds/359512339#L3329
-ionic cordova platform remove android
-ionic cordova platform add android --nofetch
+# ionic cordova platform remove android
+# ionic cordova platform add android --nofetch
+ionic cordova platform add android
 ionic cordova build android
