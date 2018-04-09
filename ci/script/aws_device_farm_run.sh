@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Enhance debugging by expanding and showing shell commands
-# set -x
+set -x
 
 # Credit to Stack Overflow questioner Jiarro and answerer Dave Dopson
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
