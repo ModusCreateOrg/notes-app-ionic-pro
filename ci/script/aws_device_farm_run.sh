@@ -16,10 +16,31 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . "$DIR/../common.sh"
 
-declare PLATFORM
-if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+declare OS_NAME
+declare COMMIT_MESSAGE
+declare IS_CI
+OS_NAME=${1:?"You must specify the OS, either 'linux' or 'osx'."}
+COMMIT_MESSAGE=${2:?"You must specify the commit message."}
+IS_CI=${3:-0}
+
+if [[ "$OS_NAME" == "linux" ]]; then
     PLATFORM="ANDROID"
 fi
+
+case "$OS_NAME" in
+    linux)
+        PLATFORM="ANDROID"
+    ;;
+
+    osx)
+        PLATFORM="IOS"
+    ;;
+
+    *)
+        echo "Unknown OS"
+        exit 1
+    ;;
+esac
 
 config_dir=$(mktemp -d)
 # Get our configs from S3
@@ -42,7 +63,7 @@ device_pool_arn=$(aws devicefarm create-device-pool \
     --output text \
     --region us-west-2)
 
-# TODO: This var will vary depending on the paltform we are building for.
+# TODO: This var will vary depending on the platform we are building for.
 cd "${ANDROID_BUILD_DIR}"
 
 # Create an upload
@@ -70,7 +91,7 @@ run_arn=$(aws devicefarm schedule-run \
         --project-arn "${project_arn}" \
         --app-arn "${upload_arn}" \
         --device-pool-arn "${device_pool_arn}" \
-        --name "${TRAVIS_COMMIT_MESSAGE}" \
+        --name "${COMMIT_MESSAGE}" \
         --test "$test_file" \
         --query 'run.arn' \
         --output text \
@@ -112,9 +133,8 @@ while [[ $run_status != "COMPLETED" ]]; do
     run_result=$(echo "$get_run_output" | jq -r '.[2]')
     run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
-    # Skip rewinding output if we are running under Travis,
-    # the hint there is that TRAVIS will be defined
-    if [[ -n "$output" ]] && [[ -z "${TRAVIS:-}" ]]; then
+    # Skip rewinding output if we are running under a CI environment.
+    if [[ -n "$output" ]] && [[ "${IS_CI}" -ne 1 ]]; then
         rewind "$output"
     fi
     output=$(printf "%s\n%s" "$progress" "$run_overview")

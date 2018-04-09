@@ -55,7 +55,7 @@ install:
 before_script:
   - ./ci/script/before/run.sh
 script:
-  - ./ci/script/aws_device_farm_run.sh
+  - ./ci/script/aws_device_farm_run.sh "${TRAVIS_OS_NAME}" "${TRAVIS_COMMIT_MESSAGE}" 1
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
