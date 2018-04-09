@@ -48,7 +48,7 @@ cd "${ANDROID_BUILD_DIR}"
 # Create an upload
 # TODO: `type` should not be hard coded.
 IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
-    --name "app-debug.apk" \
+    --name "android-debug.apk" \
     --type ANDROID_APP \
     --project-arn "${project_arn}" \
     --query 'upload.[url,arn]' \
@@ -58,7 +58,7 @@ upload_url="${upload_meta[0]}"
 upload_arn="${upload_meta[1]}"
 
 # TODO: The file to be uploaded will vary depending on how we build and the platform.
-curl -T "${ANDROID_BUILD_DIR}"/app-debug.apk "${upload_url}"
+curl -T "${ANDROID_BUILD_DIR}"/android-debug.apk "${upload_url}"
 
 # Schedule a run
 echo "{\"upload_arn\":\"$upload_arn\"}" > "${config_dir}"/upload_arn.json
