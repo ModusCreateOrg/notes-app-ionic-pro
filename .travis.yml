@@ -1,6 +1,5 @@
 ---
 branches:
-  # Safelist
   only:
     - feature/travis-build-integration
     - master
@@ -9,11 +8,10 @@ git:
 env:
   global:
     - JAVA_HOME=/usr/lib/jvm/java-8-oracle
-#    - JRE_HOME=/usr/lib/jvm/java-8-oracle/jre
     - S3_BUILD_BUCKET="device-farm-builds-976851222302"
     - S3_CONFIG_BUCKET="device-farm-configs-976851222302"
     - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
-    - ANDROID_DEBUG_APK_NAME="app-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
+    - ANDROID_DEBUG_APK_NAME="android-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
     - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
     # AWS_ACCESS_KEY_ID
     -   secure: "AJOyW5ihq8KkfgLHbWaJs09UmDr81cSDrwVA7KsKnn6IpSCPl9UiJva4EuMXV8A/csEw/ExMc8+EAoOkT90VUiw1DZVGePTWpDTHGF1tnhhI6SMRpOsIXuznGAvwFNC76m9aqvTxeN8EKoNI+d8XlLuRKGyUKs1s3aoRNJOcZFvhzbIuSGyDdfYun1BQDdKocsnu6j7P58bpsH0lpFjuFPVXsN46lcbocRShbRawZ2S72Cev74Gvo3Fln+WVJAaJN0A62nFyQZdKyqPIvdsYHsCQA3tEB71O7S9nWzXRh/r7reLRb0fqJLGp3FH12XknHzdFIr4uuDzAdIdN0Xxye28EL/i1loWwxPu5pMH2mnOY6SHNmq4LEzH/nxKWdAbEJZRwe/p0mIoznnUsKDkZbhXgrWClYNEr9KOe/BufdP+fdcqHkbF2R2P6frpNIyQFBjDTQ3eQt7E/ljOnkygQHaCL6pqRW7HccNqTDybMkJW8hW8eO3Ja4TICpkWE+/RYhGBGAmhE2D8bM1U2OgvB/vfpQgHAh4btKUIOC674NgTs4Q1xy73FAKeXvy4/Td2B69BxJT7Et7qynIXQeVUXFv7MKEFZgqdfXimtPhO5MECDCxzVxaeZgVUhTtCqpFmEQVEreT8h5HzQF8Ld2FZMM1uxBZcK7XtW97AsgT9Ez3k="
@@ -25,39 +23,14 @@ matrix:
       # Including OSX later will allow us to run a Build Matrix.
       os: linux
       sudo: false
-      # Source: https://docs.travis-ci.com/user/languages/android/
       language: android
       android:
-        # If components are missing on build, do `android list sdk --no-ui --all --extended`
-        # in local dev environment to find out what's missing.
         components:
-          # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
-          # See: https://docs.travis-ci.com/user/languages/android/#Installing-a-newer-SDK-Platform-Tools-revision
           - tools
-#          - platform-tools
-#          - tools
-
           # The BuildTools version used by your project
           - build-tools-26.0.2
-
           # The SDK version used to compile your project
           - android-26
-
-          # Additional components
-          # - extra-google-google_play_services
-          # - extra-google-m2repository
-          # - extra-android-m2repository
-          # - addon-google_apis-google-26
-
-          # Specify at least one system image,
-          # if you need to run emulator(s) during your tests
-          # - sys-img-armeabi-v7a-android-26
-          # - sys-img-armeabi-v7a-android-17
-
-          # Install Android SDK components.
-          # - sys-img-armeabi-v7a-android-tv-l
-          # - add-on
-          # - extra
   addons:
     apt:
       sources:
@@ -75,14 +48,14 @@ matrix:
     - android-sdk-license-.+
     - google-gdk-license-.+
 before_install:
-  - export LANG=en_US.UTF-8
-  - export PATH=$PATH:$HOME/.local/bin
-  - pip install --user awscli
-  - pip install --user jinja2-cli
+  - ./ci/install/before/environment.sh
+  - ./ci/install/before/aws_cli_configure.sh
 install:
   - ./ci/install/dependencies.sh
+before_script:
+  - ./ci/script/before/run.sh
 script:
-  - ./ci/build/run.sh
+  - ./ci/script/aws_device_farm_run.sh
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -93,9 +66,6 @@ cache:
     - $HOME/.android/build-cache
     - $HOME/.cache/yarn
     - $HOME/.cache/pip
-after_success:
-  - ./ci/success/after/aws_cli_configure.sh
-  - ./ci/success/after/aws_device_farm_run.sh
 # This step uploads the .apk as well as the test artifacts.
 deploy:
   provider: s3

@@ -15,12 +15,5 @@ declare DIR
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/../common.sh"
 
-use_nodejs 8
-
-yarn install
-# TODO: Figure out why we have to remove android and add it for this to work.
-# See: https://travis-ci.org/ModusCreateOrg/notes-app-ionic-pro/builds/359512339#L3329
-# ionic cordova platform remove android
-# ionic cordova platform add android --nofetch
-ionic cordova platform add android
-ionic cordova build android
+export LANG=en_US.UTF-8
+export PATH=$PATH:$HOME/.local/bin

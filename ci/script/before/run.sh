@@ -15,11 +15,12 @@ declare DIR
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/../common.sh"
 
-pip install --user awscli
-pip install --user jinja2-cli
-
-install_nodejs
 use_node 8
 
-yarn global add ionic
-yarn global add cordova
+yarn install
+# # TODO: Figure out why we have to remove android and add it for this to work.
+# # See: https://travis-ci.org/ModusCreateOrg/notes-app-ionic-pro/builds/359512339#L3329
+# # ionic cordova platform remove android
+# # ionic cordova platform add android --nofetch
+ionic cordova platform add android
+ionic cordova build android
