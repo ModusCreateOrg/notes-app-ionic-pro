@@ -14,7 +14,7 @@ declare DIR
 # shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-. "$DIR/../../common.sh"
+. "$DIR/../common.sh"
 
 declare PLATFORM
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
