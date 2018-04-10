@@ -36,7 +36,6 @@ stage('Checkout') {
     node {
         timeout(time:default_timeout_minutes, unit:'MINUTES') {
             dir(APP_REPO) {
-                sh ('env')
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "${git_branch_tag_or_commit}"]],
@@ -66,10 +65,11 @@ stage('Checkout') {
 stage('Run build') {
     node {
         unstash 'src'
-        // TODO: We should be getting a built image from the Docker registry.
-        sh ('docker build -t ***REMOVED*** ./ci/')
-        sh ("docker run --rm -v $PWD:/root/builds -w /root/builds ***REMOVED*** /root/builds/ci/build/run.sh")
-
+        dir(APP_REPO) {
+            // TODO: We should be getting a built image from the Docker registry.
+            sh ('docker build -t ***REMOVED*** ./ci/')
+            sh ("docker run --rm -v $PWD:/root/builds -w /root/builds ***REMOVED*** /root/builds/ci/build/run.sh")
+        }
         // Anrdoid .apk is built here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
     }
@@ -78,11 +78,11 @@ stage('Run build') {
 stage('Run test') {
     node {
         unstash 'build'
-//        sh ('./ci/install/before/aws_cli_configure.sh')
         wrapStep({
-            sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
+            dir(APP_REPO) {
+                sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
+            }
         })
-
         // Artifacts (reports) are downloaded here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
     }
