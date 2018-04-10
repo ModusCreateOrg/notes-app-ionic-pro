@@ -27,7 +27,7 @@ def wrapStep = { steps ->
 properties([
     parameters([
         string(name: 'git_branch_tag_or_commit', 
-               description: 'Git Branch, Tag, or Commit reference for ${APP_REPO} (${APP_NAME})',
+               description: "Git Branch, Tag, or Commit reference for ${APP_REPO} (${APP_NAME})",
                defaultValue: APP_DEFAULT_BRANCH)
     ])
 ])
@@ -39,7 +39,7 @@ stage('Checkout') {
                 sh ('env')
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '${deploy_git_branch_tag_or_commit}']],
+                    branches: [[name: '${git_branch_tag_or_commit}']],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [],
                     submoduleCfg: [],
