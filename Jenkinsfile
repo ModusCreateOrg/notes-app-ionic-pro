@@ -6,8 +6,8 @@ def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO}"
 def APP_DEFAULT_BRANCH = 'master'
 def AWS_DEV_CREDENTIAL_ID = '38613aab-24e4-4c2f-bf84-92a5b04d07c9'
 def S3_CONFIG_BUCKET = 'device-farm-configs-976851222302'
-def ANDROID_BUILD_DIR="${WORKSPACE}/platforms/android/build/outputs/apk/debug"
-def ANDROID_DEBUG_APK_NAME="android-debug-${BUILD_NUMBER}-${BUILD_ID}"
+def ANDROID_BUILD_DIR="${env.WORKSPACE}/platforms/android/build/outputs/apk/debug"
+def ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}-${env.BUILD_ID}"
 def ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
 def default_timeout_minutes = 10
 
@@ -26,7 +26,7 @@ def wrapStep = { steps ->
 
 properties([
     parameters([
-        string(name: 'git_branch_tag_or_commit', 
+        string(name: 'git_branch_tag_or_commit',
                description: "Git Branch, Tag, or Commit reference for ${APP_REPO} (${APP_NAME})",
                defaultValue: APP_DEFAULT_BRANCH)
     ])
