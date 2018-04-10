@@ -39,7 +39,7 @@ stage('Checkout') {
                 sh ('env')
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '${git_branch_tag_or_commit}']],
+                    branches: [[name: "${git_branch_tag_or_commit}"]],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [],
                     submoduleCfg: [],
@@ -54,7 +54,7 @@ stage('Checkout') {
                     returnStdout: true
                 ).trim()
             }
-            stash includes: '${APP_REPO}/**', excludes: '${APP_REPO}/.git/', name: 'src'
+            stash includes: "${APP_REPO}/**", excludes: "${APP_REPO}/.git/", name: 'src'
         }
     }
 }
@@ -71,7 +71,7 @@ stage('Run build') {
         sh ("docker run --rm -v $PWD:/root/builds -w /root/builds ***REMOVED*** /root/builds/ci/build/run.sh")
 
         // Anrdoid .apk is built here:
-        stash includes: '${APP_REPO}/platforms/android/build/outputs/apk/debug/**', name: 'build'
+        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
     }
 }
 
@@ -84,7 +84,7 @@ stage('Run test') {
         })
 
         // Artifacts (reports) are downloaded here:
-        stash includes: '${APP_REPO}/platforms/android/build/outputs/apk/debug/**', name: 'artifacts'
+        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
     }
 }
 
