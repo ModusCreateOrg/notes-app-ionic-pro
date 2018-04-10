@@ -4,7 +4,25 @@ def APP_NAME = 'notes-app-ionic-pro'
 def APP_REPO = 'notes-app-ionic-pro'
 def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO}"
 def APP_DEFAULT_BRANCH = 'master'
+def AWS_DEV_CREDENTIAL_ID = '38613aab-24e4-4c2f-bf84-92a5b04d07c9'
+def S3_CONFIG_BUCKET = 'device-farm-configs-976851222302'
+def ANDROID_BUILD_DIR="${WORKSPACE}/platforms/android/build/outputs/apk/debug"
+def ANDROID_DEBUG_APK_NAME="android-debug-${BUILD_NUMBER}-${BUILD_ID}"
+def ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
 def default_timeout_minutes = 10
+
+def wrapStep = { steps ->
+    withCredentials([usernamePassword(credentialsId: AWS_DEV_CREDENTIAL_ID,
+                                      passwordVariable: 'AWS_SECRET_ACCESS_KEY',
+                                      usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm', 'defaultFg': 1, 'defaultBg': 2]) {
+              // This is the current syntax for invoking a build wrapper, naming the class.
+              wrap([$class: 'TimestamperBuildWrapper']) {
+                  steps()
+              }
+        }
+    }
+}
 
 properties([
     parameters([
@@ -18,6 +36,7 @@ stage('Checkout') {
     node {
         timeout(time:default_timeout_minutes, unit:'MINUTES') {
             dir(APP_REPO) {
+                sh ('env')
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '${deploy_git_branch_tag_or_commit}']],
@@ -49,7 +68,9 @@ stage('Run build') {
         unstash 'src'
         // TODO: We should be getting a built image from the Docker registry.
         sh ('docker build -t ***REMOVED*** ./ci/')
-        sh ('docker run --rm -v $PWD:/root/builds -w /root/builds ***REMOVED*** /root/builds/ci/build/run.sh')
+        sh ("docker run --rm -v $PWD:/root/builds -w /root/builds ***REMOVED*** /root/builds/ci/build/run.sh")
+
+        // Anrdoid .apk is built here:
         stash includes: '${APP_REPO}/platforms/android/build/outputs/apk/debug/**', name: 'build'
     }
 }
@@ -57,15 +78,19 @@ stage('Run build') {
 stage('Run test') {
     node {
         unstash 'build'
-        sh ('./ci/install/before/aws_cli_configure.sh')
-        sh ('./ci/script/aws_device_farm_run.sh linux "${commitMessage}" 1')
-        stash includes: '${APP_REPO}/platforms/android/build/outputs/apk/debug/**', name: 'report'
+//        sh ('./ci/install/before/aws_cli_configure.sh')
+        wrapStep({
+            sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
+        })
+
+        // Artifacts (reports) are downloaded here:
+        stash includes: '${APP_REPO}/platforms/android/build/outputs/apk/debug/**', name: 'artifacts'
     }
 }
 
 stage('Run deploy') {
     node {
-        unstash 'report'
-        // Upload to S3
+        unstash 'artifacts'
+        sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
     }
 }
