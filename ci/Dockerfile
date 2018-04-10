@@ -1,8 +1,10 @@
 FROM ubuntu:14.04
 MAINTAINER Housni Yakoob <housni.yakoob@moduscreate.com>
 
-# curl requires the ca-certificates bundle
-# We set DEBIAN_FRONTEND to its default value so inherited images behave as expected.
+# The yarn repository requires `apt-transport-https`.
+# curl requires the `ca-certificates` bundle.
+# `add-apt-repository` is in `software-properties-common`.
+# We set DEBIAN_FRONTEND back to its default value (newt) so inherited images behave as expected.
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
@@ -27,11 +29,12 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && ln -s /usr/lib/jvm/java-8-oracle /usr/lib/jvm/default-java \
     && export DEBIAN_FRONTEND=newt
 
-# Install Android SDK
+# Install Android SDK.
 RUN wget -O /tmp/sdk-tools-linux-3859397.zip https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip \
     && unzip /tmp/sdk-tools-linux-3859397.zip -d /opt/android-sdk \
     && rm /tmp/sdk-tools-linux-3859397.zip
 
+# Install Gradle.
 RUN wget -O /tmp/gradle-4.6-bin.zip https://services.gradle.org/distributions/gradle-4.6-bin.zip \
     && unzip /tmp/gradle-4.6-bin.zip -d /opt/gradle \
     && rm /tmp/gradle-4.6-bin.zip \
@@ -46,6 +49,7 @@ COPY ./ /root/builds
 WORKDIR /root/builds
 RUN ./install/dependencies.sh
 
+# Accept Android SDK licences, install the required SDK's and update them.
 RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses \
     && $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26" "build-tools;26.0.2" \
     && $ANDROID_HOME/tools/bin/sdkmanager --update
