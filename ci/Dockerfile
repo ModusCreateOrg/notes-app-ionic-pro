@@ -20,6 +20,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get install --no-install-recommends -y \
         jq \
         oracle-java8-installer \
+        python-pip \
         unzip \
         yarn \
     && apt-get clean autoclean \
