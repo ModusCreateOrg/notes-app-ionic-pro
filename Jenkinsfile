@@ -2,6 +2,7 @@
 
 def APP_NAME = 'notes-app-ionic-pro'
 def APP_REPO = 'notes-app-ionic-pro2'
+// TODO: Remove after fixing Jenkins permission issue.
 def APP_REPO_TMP = 'notes-app-ionic-pro'
 def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO_TMP}"
 def APP_DEFAULT_BRANCH = 'master'
