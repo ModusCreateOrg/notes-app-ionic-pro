@@ -83,31 +83,32 @@ stage('Run build') {
                 returnStdout: true
             ).trim()
 //            if ('' == dockerImage) {
+sh ("ls -lah")
                 sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
 //            }
-            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
+//            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
         }
         // Anrdoid .apk is built here:
-        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
+//        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
     }
 }
 
-stage('Run test') {
-    node {
-        unstash 'build'
-        wrapStep({
-            dir(APP_REPO) {
-                sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
-            }
-        })
-        // Artifacts (reports) are downloaded here:
-        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
-    }
-}
+// stage('Run test') {
+//     node {
+//         unstash 'build'
+//         wrapStep({
+//             dir(APP_REPO) {
+//                 sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
+//             }
+//         })
+//         // Artifacts (reports) are downloaded here:
+//         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
+//     }
+// }
 
-stage('Run deploy') {
-    node {
-        unstash 'artifacts'
-        sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
-    }
-}
+// stage('Run deploy') {
+//     node {
+//         unstash 'artifacts'
+//         sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
+//     }
+// }
