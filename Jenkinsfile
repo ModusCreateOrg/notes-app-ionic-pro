@@ -84,14 +84,8 @@ stage('Run build') {
         unstash 'src'
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
-            def dockerImage = sh (
-                script: 'docker images -q ionic-jenkins',
-                returnStdout: true
-            ).trim()
-            if ('' == dockerImage) {
-                sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
-            }
-//            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
+            sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
+            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER ionic-jenkins ./ci/script/before/run.sh")
         }
         // Anrdoid .apk is built here:
 //        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
