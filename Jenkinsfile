@@ -21,23 +21,24 @@ node {
     user = sh(returnStdout: true, script: 'id -un').trim()
     group = sh(returnStdout: true, script: 'id -gn').trim()
 
-    ANDROID_BUILD_DIR="${env.WORKSPACE}/platforms/android/build/outputs/apk/debug"
+    ANDROID_BUILD_DIR="${env.WORKSPACE}/${APP_REPO}/platforms/android/build/outputs/apk/debug"
     ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}-${env.BUILD_ID}"
     ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
 }
 
-def wrapStep = { steps ->
-    withCredentials([usernamePassword(credentialsId: AWS_DEV_CREDENTIAL_ID,
-                                      passwordVariable: 'AWS_SECRET_ACCESS_KEY',
-                                      usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm', 'defaultFg': 1, 'defaultBg': 2]) {
-              // This is the current syntax for invoking a build wrapper, naming the class.
-              wrap([$class: 'TimestamperBuildWrapper']) {
-                  steps()
-              }
-        }
-    }
-}
+// TODO: We don't need this.
+// def wrapStep = { steps ->
+//     withCredentials([usernamePassword(credentialsId: AWS_DEV_CREDENTIAL_ID,
+//                                       passwordVariable: 'AWS_SECRET_ACCESS_KEY',
+//                                       usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+//         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm', 'defaultFg': 1, 'defaultBg': 2]) {
+//               // This is the current syntax for invoking a build wrapper, naming the class.
+//               wrap([$class: 'TimestamperBuildWrapper']) {
+//                   steps()
+//               }
+//         }
+//     }
+// }
 
 properties([
     parameters([
@@ -51,6 +52,7 @@ stage('Checkout') {
     node {
         timeout(time:default_timeout_minutes, unit:'MINUTES') {
             dir(APP_REPO) {
+                // TODO: Just use `checkout scm`
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "${git_branch_tag_or_commit}"]],
@@ -63,7 +65,7 @@ stage('Checkout') {
                     ]]
                 ])
                 sh ('git clean -fdx')
-                def commitMessage = sh (
+                commitMessage = sh (
                     script: 'git log -1 --pretty=%B',
                     returnStdout: true
                 ).trim()
@@ -82,30 +84,42 @@ stage('Run build') {
         unstash 'src'
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
-            sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
+//            sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
             sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER ionic-jenkins ./ci/script/before/run.sh")
         }
-        // Anrdoid .apk is built here:
-//        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
+        // Anrdoid .apk is built here.
+        // TODO: Consider External Workspace Manager plugin since files may be large.
+        // See: https://jenkins.io/doc/pipeline/steps/workflow-basic-steps/#code-stash-code-stash-some-files-to-be-used-later-in-the-build
+        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**, ${APP_REPO}/ci/**", name: 'build'
     }
 }
 
-// stage('Run test') {
-//     node {
-//         unstash 'build'
-//         wrapStep({
-//             dir(APP_REPO) {
-//                 sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
-//             }
-//         })
-//         // Artifacts (reports) are downloaded here:
-//         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
-//     }
-// }
+stage('Run test') {
+    node {
+        unstash 'build'
+//        wrapStep({
+            dir(APP_REPO) {
+                sh '''./ci/script/aws_device_farm_run.sh \
+                        "${commitMessage}" \
+                        "${S3_CONFIG_BUCKET}" \
+                        "${ANDROID_DEBUG_APK_NAME}" \
+                        "${ANDROID_BUILD_DIR}" \
+                        "${ANDROID_BUILD_LATEST_DIR}"
+                '''
+            }
+//        })
+        // Artifacts (reports) are downloaded here:
+        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
+    }
+}
 
-// stage('Run deploy') {
-//     node {
-//         unstash 'artifacts'
-//         sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
-//     }
-// }
+stage('Run deploy') {
+    node {
+        unstash 'artifacts'
+//        wrapStep({
+            dir(APP_REPO) {
+                sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
+            }
+//        })
+    }
+}

@@ -16,23 +16,24 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . "$DIR/../common.sh"
 
-declare OS_NAME
 declare COMMIT_MESSAGE
-declare IS_CI
-OS_NAME=${1:?"You must specify the OS, either 'linux' or 'osx'."}
-COMMIT_MESSAGE=${2:?"You must specify the commit message."}
-IS_CI=${3:-0}
+declare S3_CONFIG_BUCKET
+declare ANDROID_DEBUG_APK_NAME
+declare ANDROID_BUILD_DIR
+declare ANDROID_BUILD_LATEST_DIR
 
-if [[ "$OS_NAME" == "linux" ]]; then
-    PLATFORM="ANDROID"
-fi
+COMMIT_MESSAGE="${1:?'You must specify the commit message.'}"
+S3_CONFIG_BUCKET="${2:?'You must specify the S3 config bucket.'}"
+ANDROID_DEBUG_APK_NAME="${3}"
+ANDROID_BUILD_DIR="${4}"
+ANDROID_BUILD_LATEST_DIR="${5}"
 
-case "$OS_NAME" in
-    linux)
+case $(uname -s) in
+    Linux)
         PLATFORM="ANDROID"
     ;;
 
-    osx)
+    Darwin)
         PLATFORM="IOS"
     ;;
 
@@ -133,8 +134,8 @@ while [[ $run_status != "COMPLETED" ]]; do
     run_result=$(echo "$get_run_output" | jq -r '.[2]')
     run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
-    # Skip rewinding output if we are running under a CI environment.
-    if [[ -n "$output" ]] && [[ "${IS_CI}" -ne 1 ]]; then
+    # Skip rewinding output if we are running in Jenkins or Travis.
+    if [[ -n "$output" ]] && [[ -z "${BUILD_NUMBER:-}" ]] && [[ -z "${TRAVIS:-}" ]]; then
         rewind "$output"
     fi
     output=$(printf "%s\n%s" "$progress" "$run_overview")
