@@ -1,8 +1,9 @@
 #!/usr/bin/env groovy
 
 def APP_NAME = 'notes-app-ionic-pro'
-def APP_REPO = 'notes-app-ionic-pro'
-def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO}"
+def APP_REPO = 'notes-app-ionic-pro2'
+def APP_REPO_TMP = 'notes-app-ionic-pro'
+def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO_TMP}"
 def APP_DEFAULT_BRANCH = 'master'
 def AWS_DEV_CREDENTIAL_ID = '38613aab-24e4-4c2f-bf84-92a5b04d07c9'
 def S3_CONFIG_BUCKET = 'device-farm-configs-976851222302'
@@ -58,7 +59,7 @@ stage('Checkout') {
                         url: 'https://github.com/ModusCreateOrg/notes-app-ionic-pro'
                     ]]
                 ])
-//                sh ('git clean -fdx')
+                sh ('git clean -fdx')
                 def commitMessage = sh (
                     script: 'git log -1 --pretty=%B',
                     returnStdout: true
@@ -82,33 +83,32 @@ stage('Run build') {
                 script: 'docker images -q ionic-jenkins',
                 returnStdout: true
             ).trim()
-//            if ('' == dockerImage) {
-sh ("ls -lah")
+            if ('' == dockerImage) {
                 sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
-//            }
-//            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
+            }
+            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
         }
         // Anrdoid .apk is built here:
-//        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
+        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
     }
 }
 
-// stage('Run test') {
-//     node {
-//         unstash 'build'
-//         wrapStep({
-//             dir(APP_REPO) {
-//                 sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
-//             }
-//         })
-//         // Artifacts (reports) are downloaded here:
-//         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
-//     }
-// }
+stage('Run test') {
+    node {
+        unstash 'build'
+        wrapStep({
+            dir(APP_REPO) {
+                sh ("./ci/script/aws_device_farm_run.sh linux '${commitMessage}' 1")
+            }
+        })
+        // Artifacts (reports) are downloaded here:
+        stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
+    }
+}
 
-// stage('Run deploy') {
-//     node {
-//         unstash 'artifacts'
-//         sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
-//     }
-// }
+stage('Run deploy') {
+    node {
+        unstash 'artifacts'
+        sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
+    }
+}
