@@ -58,7 +58,7 @@ stage('Checkout') {
                         url: 'https://github.com/ModusCreateOrg/notes-app-ionic-pro'
                     ]]
                 ])
-                sh ('git clean -fdx')
+//                sh ('git clean -fdx')
                 def commitMessage = sh (
                     script: 'git log -1 --pretty=%B',
                     returnStdout: true
@@ -82,9 +82,9 @@ stage('Run build') {
                 script: 'docker images -q ionic-jenkins',
                 returnStdout: true
             ).trim()
-            if ('' == dockerImage) {
+//            if ('' == dockerImage) {
                 sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
-            }
+//            }
             sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
         }
         // Anrdoid .apk is built here:

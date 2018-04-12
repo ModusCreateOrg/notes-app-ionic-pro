@@ -7,6 +7,8 @@ ARG USER
 ARG GROUP
 ARG SHELL=/bin/bash
 
+RUN rm -rf platforms node_modules plugins www .sourcemaps
+
 # The yarn repository requires `apt-transport-https`.
 # curl requires the `ca-certificates` bundle.
 # `add-apt-repository` is in `software-properties-common`.
