@@ -15,6 +15,13 @@ declare DIR
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/../../common.sh"
 
+# If we are running in Jenkins, run fixuid.
+# See: https://github.com/boxboat/fixuid#run-in-startup-script-instead-of-entrypoint
+if [[ ! -z "${BUILD_NUMBER:-}" ]]; then
+    echo "Running fixuid..."
+    eval $( fixuid )
+fi
+
 use_node 8
 
 yarn install

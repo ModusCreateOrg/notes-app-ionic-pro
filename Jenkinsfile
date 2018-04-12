@@ -10,6 +10,17 @@ def ANDROID_BUILD_DIR="${env.WORKSPACE}/platforms/android/build/outputs/apk/debu
 def ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}-${env.BUILD_ID}"
 def ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
 def default_timeout_minutes = 10
+def uid
+def gid
+def user
+def group
+
+node {
+    uid = sh(returnStdout: true, script: 'id -u').trim()
+    gid = sh(returnStdout: true, script: 'id -g').trim()
+    user = sh(returnStdout: true, script: 'id -un').trim()
+    group = sh(returnStdout: true, script: 'id -gn').trim()
+}
 
 def wrapStep = { steps ->
     withCredentials([usernamePassword(credentialsId: AWS_DEV_CREDENTIAL_ID,
@@ -67,8 +78,14 @@ stage('Run build') {
         unstash 'src'
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
-            sh ('docker build -t ***REMOVED*** ./ci/')
-            sh ("docker run --rm -v $PWD:/root/builds -w /root/builds ***REMOVED*** /root/builds/ci/build/run.sh")
+            def dockerImage = sh (
+                script: 'docker images -q ionic-jenkins',
+                returnStdout: true
+            ).trim()
+            if ('' == dockerImage) {
+                sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
+            }
+            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/before/run.sh")
         }
         // Anrdoid .apk is built here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'build'
