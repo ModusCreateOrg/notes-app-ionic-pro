@@ -55,7 +55,7 @@ install:
 before_script:
   - ./ci/script/before/run.sh
 script:
-  - ./ci/script/aws_device_farm_run.sh "${TRAVIS_OS_NAME}" "${TRAVIS_COMMIT_MESSAGE}" 1
+  - ./ci/script/aws_device_farm_run.sh "${TRAVIS_COMMIT_MESSAGE}" "${S3_CONFIG_BUCKET}" "${ANDROID_DEBUG_APK_NAME}" "${ANDROID_BUILD_DIR}" "${ANDROID_BUILD_LATEST_DIR}"
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
