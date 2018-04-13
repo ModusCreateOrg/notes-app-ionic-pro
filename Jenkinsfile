@@ -20,7 +20,7 @@ node {
     group = sh(returnStdout: true, script: 'id -gn').trim()
 
     ANDROID_BUILD_DIR="$HOME/builds/platforms/android/build/outputs/apk/debug"
-    ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}"
+    ANDROID_DEBUG_APK_NAME="jenkins-android-debug-${env.BUILD_NUMBER}"
 }
 
 properties([
@@ -30,7 +30,10 @@ properties([
                defaultValue: APP_DEFAULT_BRANCH),
         string(name: 's3_config_bucket',
                description: "The S3 bucket that contains the cofiguration for AWS DeviceFarm",
-               defaultValue: 'device-farm-configs-976851222302')
+               defaultValue: 'device-farm-configs-976851222302'),
+        string(name: 's3_build_bucket',
+               description: "The S3 bucket to which builds and DeviceFarm reports will be uploaded to",
+               defaultValue: 'device-farm-builds-976851222302')
     ])
 ])
 
@@ -95,7 +98,7 @@ stage('Run deploy') {
     node {
         unstash 'artifacts'
         dir(APP_REPO) {
-            sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
+            sh ("aws s3 cp '${ANDROID_BUILD_DIR}/latest' s3://${s3_build_bucket}/ --recursive")
         }
     }
 }
