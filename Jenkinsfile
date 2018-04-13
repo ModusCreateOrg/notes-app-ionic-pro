@@ -20,9 +20,9 @@ node {
     user = sh(returnStdout: true, script: 'id -un').trim()
     group = sh(returnStdout: true, script: 'id -gn').trim()
 
-    CONTAINER_ANDROID_BUILD_DIR="$HOME/builds/platforms/android/build/outputs/apk/debug"
-    HOST_ANDROID_BUILD_DIR="${env.WORKSPACE}/${APP_REPO}/platforms/android/build/outputs/apk/debug"
-    ANDROID_DEBUG_APK_NAME="jenkins-android-debug-${env.BUILD_NUMBER}"
+    CONTAINER_ANDROID_BUILD_DIR = "$HOME/builds/platforms/android/build/outputs/apk/debug"
+    HOST_ANDROID_BUILD_DIR = "${env.WORKSPACE}/${APP_REPO}/platforms/android/build/outputs/apk/debug"
+    ANDROID_DEBUG_APK_NAME = "jenkins-android-debug-${env.BUILD_NUMBER}"
 }
 
 properties([
@@ -43,18 +43,7 @@ stage('Checkout') {
     node {
         timeout(time:default_timeout_minutes, unit:'MINUTES') {
             dir(APP_REPO) {
-                // TODO: Just use `checkout scm`
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "${git_branch_tag_or_commit}"]],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [],
-                    submoduleCfg: [],
-                    userRemoteConfigs: [[
-                        credentialsId: 'd52afb0b-bd8b-4705-89a5-fba502b8ac7d',
-                        url: 'https://github.com/ModusCreateOrg/notes-app-ionic-pro'
-                    ]]
-                ])
+                checkout scm
                 sh ('git clean -fdx')
                 commitMessage = sh (
                     script: 'git log -1 --pretty=%B',
