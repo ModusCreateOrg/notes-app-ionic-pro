@@ -1,8 +1,4 @@
 ---
-branches:
-  only:
-    - feature/travis-build-integration
-    - master
 git:
   depth: 1
 env:
