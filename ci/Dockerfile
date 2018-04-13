@@ -17,7 +17,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         apt-transport-https \
         ca-certificates \
         curl \
-        jq \
         python-pip \
         software-properties-common \
         unzip \
@@ -36,6 +35,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && ln -s /usr/lib/jvm/java-8-oracle /usr/lib/jvm/default-java \
     && export DEBIAN_FRONTEND=newt
 
+# Install fixuid.
 RUN addgroup --gid $GID $GROUP \
     && adduser --uid $UID --ingroup $GROUP --home /home/$USER --shell $SHELL --disabled-password --gecos "" $USER
 RUN curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.3/fixuid-0.3-linux-amd64.tar.gz | tar -C /usr/local/bin -xzf - \
@@ -43,6 +43,10 @@ RUN curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.3/fixuid-0.
     && chmod 4755 /usr/local/bin/fixuid \
     && mkdir -p /etc/fixuid \
     && printf "user: $USER\ngroup: $GROUP\n" > /etc/fixuid/config.yml
+
+# Install the latest jq.
+RUN wget -O /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
+    && chmod +x jq
 
 # Install Android SDK.
 RUN wget -O /tmp/sdk-tools-linux-3859397.zip https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip \
