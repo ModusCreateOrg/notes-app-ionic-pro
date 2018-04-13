@@ -46,7 +46,7 @@ RUN curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.3/fixuid-0.
 
 # Install the latest jq.
 RUN wget -O /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
-    && chmod +x jq
+    && chmod +x /usr/local/bin/jq
 
 # Install Android SDK.
 RUN wget -O /tmp/sdk-tools-linux-3859397.zip https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip \
