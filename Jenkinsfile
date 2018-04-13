@@ -5,7 +5,8 @@ def APP_REPO = 'notes-app-ionic-pro'
 def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO}"
 def APP_DEFAULT_BRANCH = 'master'
 def AWS_DEV_CREDENTIAL_ID = '38613aab-24e4-4c2f-bf84-92a5b04d07c9'
-def ANDROID_BUILD_DIR
+def CONTAINER_ANDROID_BUILD_DIR
+def HOST_ANDROID_BUILD_DIR
 def ANDROID_DEBUG_APK_NAME
 def default_timeout_minutes = 10
 def uid
@@ -19,7 +20,8 @@ node {
     user = sh(returnStdout: true, script: 'id -un').trim()
     group = sh(returnStdout: true, script: 'id -gn').trim()
 
-    ANDROID_BUILD_DIR="$HOME/builds/platforms/android/build/outputs/apk/debug"
+    CONTAINER_ANDROID_BUILD_DIR="$HOME/builds/platforms/android/build/outputs/apk/debug"
+    HOST_ANDROID_BUILD_DIR="${env.WORKSPACE}/${APP_REPO}/platforms/android/build/outputs/apk/debug"
     ANDROID_DEBUG_APK_NAME="jenkins-android-debug-${env.BUILD_NUMBER}"
 }
 
@@ -87,7 +89,7 @@ stage('Run test') {
     node {
         unstash 'build'
         dir(APP_REPO) {
-            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${ANDROID_BUILD_DIR}'")
+            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${CONTAINER_ANDROID_BUILD_DIR}'")
         }
         // Artifacts (reports) are downloaded here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
@@ -98,7 +100,7 @@ stage('Run deploy') {
     node {
         unstash 'artifacts'
         dir(APP_REPO) {
-            sh ("aws s3 cp '${ANDROID_BUILD_DIR}/latest' s3://${s3_build_bucket}/ --recursive")
+            sh ("aws s3 cp '${HOST_ANDROID_BUILD_DIR}/latest' s3://${s3_build_bucket}/ --recursive")
         }
     }
 }
