@@ -19,7 +19,7 @@ node {
     user = sh(returnStdout: true, script: 'id -un').trim()
     group = sh(returnStdout: true, script: 'id -gn').trim()
 
-    ANDROID_BUILD_DIR="${env.WORKSPACE}/${APP_REPO}/platforms/android/build/outputs/apk/debug"
+    ANDROID_BUILD_DIR="$HOME/builds/platforms/android/build/outputs/apk/debug"
     ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}"
 }
 
@@ -84,7 +84,7 @@ stage('Run test') {
     node {
         unstash 'build'
         dir(APP_REPO) {
-            sh ("./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${ANDROID_BUILD_DIR}'")
+            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${ANDROID_BUILD_DIR}'")
         }
         // Artifacts (reports) are downloaded here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
