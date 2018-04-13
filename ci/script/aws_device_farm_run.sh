@@ -26,7 +26,7 @@ COMMIT_MESSAGE="${1:?'You must specify the commit message.'}"
 S3_CONFIG_BUCKET="${2:?'You must specify the S3 config bucket.'}"
 ANDROID_DEBUG_APK_NAME="${3}"
 ANDROID_BUILD_DIR="${4}"
-ANDROID_BUILD_LATEST_DIR="${5}"
+ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
 
 case $(uname -s) in
     Linux)
