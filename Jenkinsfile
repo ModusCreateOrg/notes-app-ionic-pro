@@ -5,10 +5,8 @@ def APP_REPO = 'notes-app-ionic-pro'
 def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO}"
 def APP_DEFAULT_BRANCH = 'master'
 def AWS_DEV_CREDENTIAL_ID = '38613aab-24e4-4c2f-bf84-92a5b04d07c9'
-def S3_CONFIG_BUCKET = 'device-farm-configs-976851222302'
 def ANDROID_BUILD_DIR
 def ANDROID_DEBUG_APK_NAME
-def ANDROID_BUILD_LATEST_DIR
 def default_timeout_minutes = 10
 def uid
 def gid
@@ -22,29 +20,17 @@ node {
     group = sh(returnStdout: true, script: 'id -gn').trim()
 
     ANDROID_BUILD_DIR="${env.WORKSPACE}/${APP_REPO}/platforms/android/build/outputs/apk/debug"
-    ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}-${env.BUILD_ID}"
-    ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
+    ANDROID_DEBUG_APK_NAME="android-debug-${env.BUILD_NUMBER}"
 }
-
-// TODO: We don't need this.
-// def wrapStep = { steps ->
-//     withCredentials([usernamePassword(credentialsId: AWS_DEV_CREDENTIAL_ID,
-//                                       passwordVariable: 'AWS_SECRET_ACCESS_KEY',
-//                                       usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-//         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm', 'defaultFg': 1, 'defaultBg': 2]) {
-//               // This is the current syntax for invoking a build wrapper, naming the class.
-//               wrap([$class: 'TimestamperBuildWrapper']) {
-//                   steps()
-//               }
-//         }
-//     }
-// }
 
 properties([
     parameters([
         string(name: 'git_branch_tag_or_commit',
                description: "Git Branch, Tag, or Commit reference for ${APP_REPO} (${APP_NAME})",
-               defaultValue: APP_DEFAULT_BRANCH)
+               defaultValue: APP_DEFAULT_BRANCH),
+        string(name: 's3_config_bucket',
+               description: "The S3 bucket that contains the cofiguration for AWS DeviceFarm",
+               defaultValue: 'device-farm-configs-976851222302')
     ])
 ])
 
@@ -84,7 +70,7 @@ stage('Run build') {
         unstash 'src'
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
-//            sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
+            sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
             sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER ionic-jenkins ./ci/script/before/run.sh")
         }
         // Anrdoid .apk is built here.
@@ -97,17 +83,9 @@ stage('Run build') {
 stage('Run test') {
     node {
         unstash 'build'
-//        wrapStep({
-            dir(APP_REPO) {
-                sh '''./ci/script/aws_device_farm_run.sh \
-                        "${commitMessage}" \
-                        "${S3_CONFIG_BUCKET}" \
-                        "${ANDROID_DEBUG_APK_NAME}" \
-                        "${ANDROID_BUILD_DIR}" \
-                        "${ANDROID_BUILD_LATEST_DIR}"
-                '''
-            }
-//        })
+        dir(APP_REPO) {
+            sh ("./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${ANDROID_BUILD_DIR}'")
+        }
         // Artifacts (reports) are downloaded here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
     }
@@ -116,10 +94,8 @@ stage('Run test') {
 stage('Run deploy') {
     node {
         unstash 'artifacts'
-//        wrapStep({
-            dir(APP_REPO) {
-                sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
-            }
-//        })
+        dir(APP_REPO) {
+            sh ('aws s3 ls s3://device-farm-builds-976851222302/ --region us-east-1')
+        }
     }
 }
