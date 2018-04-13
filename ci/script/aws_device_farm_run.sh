@@ -148,6 +148,14 @@ echo "########## Test runs done with result \"$run_result\""
 if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
     echo "Terminating build"
     exit 1
+
+    # Unlike Jenkins, Travis doesn't terminate on a Bash `exit` so we have to
+    # cancel it manually.
+    # See: https://blog.travis-ci.com/2013-08-21-abort-mission-cancel-running-builds
+    # See: https://github.com/travis-ci/travis.rb#cancel
+    if [[ ! -z "${TRAVIS:-}" ]]; then
+        travis cancel "${TRAVIS_BUILD_NUMBER}"
+    fi
 fi
 
 # TODO: Show more info like: https://aws.amazon.com/blogs/mobile/get-started-with-the-aws-device-farm-cli-and-calabash-part-2-retrieving-reports-and-artifacts/
