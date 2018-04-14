@@ -143,26 +143,12 @@ while [[ $run_status != "COMPLETED" ]]; do
 done
 echo "########## Test runs done with result \"$run_result\""
 
-set -x
 # TODO: Test this
 # Fail the build if it doesn't pass.
 if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
     echo "Terminating build"
     exit 1
-
-    env
-
-    echo "TRAVIS IS: $TRAVIS"
-
-    # Unlike Jenkins, Travis doesn't terminate on a Bash `exit` so we have to
-    # cancel it manually.
-    # See: https://blog.travis-ci.com/2013-08-21-abort-mission-cancel-running-builds
-    # See: https://github.com/travis-ci/travis.rb#cancel
-    if [[ ! -z "${TRAVIS:-}" ]]; then
-        travis cancel "${TRAVIS_BUILD_NUMBER}"
-    fi
 fi
-set +x
 
 # TODO: Show more info like: https://aws.amazon.com/blogs/mobile/get-started-with-the-aws-device-farm-cli-and-calabash-part-2-retrieving-reports-and-artifacts/
 results=$(aws devicefarm list-jobs \
