@@ -185,12 +185,11 @@ if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
     exit 1
 fi
 
-echo "$results" > "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/list-jobs.json"
-
 # Move the .apk file to a dir on its own since the entire dir will be uploaded
 # to the S3 bucket.
 rm -rf "${ANDROID_BUILD_LATEST_DIR}"
 mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
+echo "$results" > "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/list-jobs.json"
 mv \
     "${ANDROID_BUILD_DIR}"/android-debug.apk \
     "${ANDROID_BUILD_LATEST_DIR}"/"${ANDROID_DEBUG_APK_NAME}".apk
