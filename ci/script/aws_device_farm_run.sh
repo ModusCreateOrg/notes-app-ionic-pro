@@ -21,12 +21,14 @@ declare S3_CONFIG_BUCKET
 declare ANDROID_DEBUG_APK_NAME
 declare ANDROID_BUILD_DIR
 declare ANDROID_BUILD_LATEST_DIR
+declare WAIT
 
 COMMIT_MESSAGE="${1:?'You must specify the commit message.'}"
 S3_CONFIG_BUCKET="${2:?'You must specify the S3 config bucket.'}"
 ANDROID_DEBUG_APK_NAME="${3}"
 ANDROID_BUILD_DIR="${4}"
 ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
+WAIT=30
 
 case $(uname -s) in
     Linux)
@@ -125,7 +127,7 @@ output=""
 # See: https://docs.aws.amazon.com/cli/latest/reference/devicefarm/get-run.html#output
 while [[ $run_status != "COMPLETED" ]]; do
     if [[ -n "$output" ]]; then
-        sleep 5
+        sleep "$WAIT"
     fi
     progress="${progress}."
     get_run_output=$(get_run "$run_arn")
@@ -134,10 +136,6 @@ while [[ $run_status != "COMPLETED" ]]; do
     run_result=$(echo "$get_run_output" | jq -r '.[2]')
     run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
-    # Skip rewinding output if we are running in Jenkins or Travis.
-    if [[ -n "$output" ]] && [[ -z "${BUILD_NUMBER:-}" ]] && [[ -z "${TRAVIS:-}" ]]; then
-        rewind "$output"
-    fi
     output=$(printf "%s\n%s" "$progress" "$run_overview")
     echo "$output"
 done

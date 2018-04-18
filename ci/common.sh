@@ -66,27 +66,3 @@ use_node() {
         nvm use "${version}"
     fi
 }
-
-scroll_impl() {
-    local text
-    text="${1:-}"
-    local scroller
-    scroller="${2:-}"
-    local lines
-    lines=$(wc -l <<<"$text")
-    if [[ $lines -gt 0 ]]; then
-        #shellcheck disable=SC2034
-        for line in $(seq 1 "$lines"); do
-            #shellcheck disable=SC2059
-            printf "$scroller"
-        done
-    fi
-}
-
-rewind() {
-    local text
-    text="${1:-}"
-    scroll_impl "$text" "\033[F"
-    scroll_impl "$text" "                                                 \n"
-    scroll_impl "$text" "\033[F"
-}
