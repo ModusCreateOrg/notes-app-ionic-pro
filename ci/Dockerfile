@@ -38,8 +38,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 
 # Install fixuid.
 RUN addgroup --gid $GID $GROUP \
-    && adduser --uid $UID --ingroup $GROUP --home /home/$USER --shell $SHELL --disabled-password --gecos "" $USER
-RUN curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.3/fixuid-0.3-linux-amd64.tar.gz | tar -C /usr/local/bin -xzf - \
+    && adduser --uid $UID --ingroup $GROUP --home /home/$USER --shell $SHELL --disabled-password --gecos "" $USER \
+    && curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.3/fixuid-0.3-linux-amd64.tar.gz | tar -C /usr/local/bin -xzf - \
     && chown root:root /usr/local/bin/fixuid \
     && chmod 4755 /usr/local/bin/fixuid \
     && mkdir -p /etc/fixuid \
