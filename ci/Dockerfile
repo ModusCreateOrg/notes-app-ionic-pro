@@ -15,6 +15,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
         apt-transport-https \
+        bsdmainutils \
         ca-certificates \
         curl \
         python-pip \
