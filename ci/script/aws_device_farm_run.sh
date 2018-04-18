@@ -189,7 +189,6 @@ fi
 # to the S3 bucket.
 rm -rf "${ANDROID_BUILD_LATEST_DIR}"
 mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
-echo "$results" > "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/list-jobs.json"
 mv \
     "${ANDROID_BUILD_DIR}"/android-debug.apk \
     "${ANDROID_BUILD_LATEST_DIR}"/"${ANDROID_DEBUG_APK_NAME}".apk
@@ -216,6 +215,8 @@ for type in FILE SCREENSHOT; do
         --region us-west-2 \
         | jq -cr '.[] | .[] | {url: .url, type: .type, extension: .extension, name: .name}')
 done
+
+echo "$results" > "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/list-jobs.json"
 
 aws devicefarm delete-project \
     --arn "${project_arn}" \
