@@ -143,21 +143,49 @@ while [[ $run_status != "COMPLETED" ]]; do
 done
 echo "########## Test runs done with result \"$run_result\""
 
-# TODO: Test this
+results=$(aws devicefarm list-jobs \
+    --arn "$run_arn" \
+    --output json \
+    --region us-west-2)
+
+header="Name|Model|Form|Operating System|Resolution|RAM/CPU|Result|Duration"
+res_length=$(echo "$results" | jq '.jobs | length')
+content=""
+counter=0
+while [ $counter -lt "$res_length" ]; do
+    res_device=$(echo "$results" | jq -r ".jobs[$counter].device | {
+        # The device's display name.
+        name,
+        # The device's model ID.
+        modelId,
+        # The device's form factor.
+        formFactor,
+        # The device's platform and the device's operating system type.
+        \"os\": \"\(.platform) \(.os)\",
+        # The resolution of the device, expressed in pixels.
+        \"resolution\": \"\(.resolution.width)x\(.resolution.height)\",
+        # The device's total memory size converted bytes to GB and tThe clock speed of the device's CPU converted from Hz to GHz.
+        \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
+    } | join(\"|\")")
+    # The job's result.
+    res_root=$(echo "$results" | jq -r ".jobs[$counter].result")
+    # The total minutes used by the resource to run tests.
+    res_device_minutes=$(echo "$results" | jq -r ".jobs[$counter].deviceMinutes.total|tostring + \" mins\"")
+
+    content="${content}${res_device}|${res_root}|${res_device_minutes}\n"
+    let counter=counter+1
+done
+
+echo -e "$header
+$content" | column -c80 -s"|" -t
+
 # Fail the build if it doesn't pass.
 if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
     echo "Terminating build"
     exit 1
 fi
 
-# TODO: Show more info like: https://aws.amazon.com/blogs/mobile/get-started-with-the-aws-device-farm-cli-and-calabash-part-2-retrieving-reports-and-artifacts/
-results=$(aws devicefarm list-jobs \
-    --arn "$run_arn" \
-    --output json \
-    --region us-west-2)
-
-# TODO: Maybe upload this to S3?
-echo "JOBS: $results"
+echo "$results" > "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/list-jobs.json"
 
 # Move the .apk file to a dir on its own since the entire dir will be uploaded
 # to the S3 bucket.
@@ -179,7 +207,7 @@ for type in FILE SCREENSHOT; do
 
         mkdir -p "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}"
         set +e
-        try_with_backoff wget -O "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}/${artifact_filename}" "${artifact_url}"
+        try_with_backoff curl -o "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}/${artifact_filename}" "${artifact_url}"
         set -e
         let COUNTER=COUNTER+1
     done < <(aws devicefarm list-artifacts \
