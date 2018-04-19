@@ -118,7 +118,6 @@ run_status=$(echo "$get_run_output" | jq -r '.[0]')
 run_result=$(echo "$get_run_output" | jq -r '.[2]')
 run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
-# Credits to Richard Bullington-McGuire (via monitor-deployment.sh in cloud-deployment-scripts)
 echo "########## AWS Device Farm run started"
 echo ""
 progress=""
@@ -132,7 +131,6 @@ while [[ $run_status != "COMPLETED" ]]; do
     progress="${progress}."
     get_run_output=$(get_run "$run_arn")
     run_status=$(echo "$get_run_output" | jq -r '.[0]')
-    # run_arn=$(echo "$get_run_output" | jq '.[1]')
     run_result=$(echo "$get_run_output" | jq -r '.[2]')
     run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
@@ -146,7 +144,7 @@ results=$(aws devicefarm list-jobs \
     --output json \
     --region us-west-2)
 
-header="Name|Model|Form|Operating System|Resolution|RAM/CPU|Result|Duration"
+header="Name|Model|Form|Operating System|Resolution|RAM/CPU|Result|Duration\n"
 res_length=$(echo "$results" | jq '.jobs | length')
 content=""
 counter=0
@@ -162,7 +160,8 @@ while [ $counter -lt "$res_length" ]; do
         \"os\": \"\(.platform) \(.os)\",
         # The resolution of the device, expressed in pixels.
         \"resolution\": \"\(.resolution.width)x\(.resolution.height)\",
-        # The device's total memory size converted bytes to GB and tThe clock speed of the device's CPU converted from Hz to GHz.
+        # The device's total memory size converted bytes to GB and
+        # the clock speed of the device's CPU converted from Hz to GHz.
         \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
     } | join(\"|\")")
     # The job's result.
@@ -174,8 +173,7 @@ while [ $counter -lt "$res_length" ]; do
     let counter=counter+1
 done
 
-echo -e "$header
-$content" | column -c80 -s"|" -t
+echo -e "${header}${content}" | column -c80 -s"|" -t
 
 # Fail the build if it doesn't pass.
 if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
