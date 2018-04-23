@@ -18,25 +18,30 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 declare COMMIT_MESSAGE
 declare S3_CONFIG_BUCKET
-declare ANDROID_DEBUG_APK_NAME
-declare ANDROID_BUILD_DIR
-declare ANDROID_BUILD_LATEST_DIR
+declare PACKAGE_NAME
+declare BUILD_DIR
+declare BUILD_DIR_LATEST
 declare WAIT
 
 COMMIT_MESSAGE="${1:?'You must specify the commit message.'}"
 S3_CONFIG_BUCKET="${2:?'You must specify the S3 config bucket.'}"
-ANDROID_DEBUG_APK_NAME="${3}"
-ANDROID_BUILD_DIR="${4}"
-ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
+PACKAGE_NAME="${3}"
+BUILD_DIR="${4}"
+BUILD_DIR_LATEST="${BUILD_DIR}/latest"
 WAIT=30
 
 case $(uname -s) in
     Linux)
         PLATFORM="ANDROID"
+        UPLOAD_TYPE="ANDROID_APP"
+        PACKAGE_EXT="apk"
+        mv "${BUILD_DIR}"/android-debug."${PACKAGE_EXT}" "${BUILD_DIR}/${PACKAGE_NAME}.${PACKAGE_EXT}"
     ;;
 
     Darwin)
         PLATFORM="IOS"
+        UPLOAD_TYPE="IOS_APP"
+        PACKAGE_EXT="ipa"
     ;;
 
     *)
@@ -47,12 +52,12 @@ esac
 
 config_dir=$(mktemp -d)
 # Get our configs from S3
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"-device-pool.json "${config_dir}"/"${PLATFORM,,}"-device-pool.json
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/test-BUILTIN_EXPLORER.jinja2 "${config_dir}"/test-BUILTIN_EXPLORER.jinja2
+aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"/device-pool.json "${config_dir}"/"${PLATFORM,,}"/device-pool.json
+aws s3 cp s3://"${S3_CONFIG_BUCKET}"/tests/BUILTIN_EXPLORER.jinja2 "${config_dir}"/tests/BUILTIN_EXPLORER.jinja2
 
 # Create project
 project_arn=$(aws devicefarm create-project \
-    --name "${ANDROID_DEBUG_APK_NAME}".apk \
+    --name "${PACKAGE_NAME}.${PACKAGE_EXT}" \
     --query 'project.arn' \
     --output text \
     --region us-west-2)
@@ -61,19 +66,17 @@ project_arn=$(aws devicefarm create-project \
 device_pool_arn=$(aws devicefarm create-device-pool \
     --project-arn "${project_arn}" \
     --name "${PLATFORM,,}"-devices \
-    --rules file://"${config_dir}"/"${PLATFORM,,}"-device-pool.json \
+    --rules file://"${config_dir}"/"${PLATFORM,,}"/device-pool.json \
     --query 'devicePool.arn' \
     --output text \
     --region us-west-2)
 
-# TODO: This var will vary depending on the platform we are building for.
-cd "${ANDROID_BUILD_DIR}"
+cd "${BUILD_DIR}"
 
 # Create an upload
-# TODO: `type` should not be hard coded.
 IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
-    --name "android-debug.apk" \
-    --type ANDROID_APP \
+    --name "${PACKAGE_NAME}.${PACKAGE_EXT}" \
+    --type "${UPLOAD_TYPE}" \
     --project-arn "${project_arn}" \
     --query 'upload.[url,arn]' \
     --output text \
@@ -81,13 +84,12 @@ IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
 upload_url="${upload_meta[0]}"
 upload_arn="${upload_meta[1]}"
 
-# TODO: The file to be uploaded will vary depending on how we build and the platform.
-curl -T "${ANDROID_BUILD_DIR}"/android-debug.apk "${upload_url}"
+curl -T "${BUILD_DIR}/${PACKAGE_NAME}.${PACKAGE_EXT}" "${upload_url}"
 
 # Schedule a run
 echo "{\"upload_arn\":\"$upload_arn\"}" > "${config_dir}"/upload_arn.json
 test_file=$(jinja2 \
-    "${config_dir}"/test-BUILTIN_EXPLORER.jinja2 \
+    "${config_dir}"/tests/BUILTIN_EXPLORER.jinja2 \
     "${config_dir}"/upload_arn.json \
     --format=json)
 run_arn=$(aws devicefarm schedule-run \
@@ -114,7 +116,6 @@ get_run() {
 declare -a get_run_output
 get_run_output=$(get_run "$run_arn")
 run_status=$(echo "$get_run_output" | jq -r '.[0]')
-# run_arn=$(echo "$get_run_output" | jq -r '.[1]')
 run_result=$(echo "$get_run_output" | jq -r '.[2]')
 run_overview=$(echo "$get_run_output" | jq -r '.[3]')
 
@@ -122,7 +123,6 @@ echo "########## AWS Device Farm run started"
 echo ""
 progress=""
 output=""
-# TODO: Check to see if I should checking for other run_status types
 # See: https://docs.aws.amazon.com/cli/latest/reference/devicefarm/get-run.html#output
 while [[ $run_status != "COMPLETED" ]]; do
     if [[ -n "$output" ]]; then
@@ -181,13 +181,13 @@ if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
     exit 1
 fi
 
-# Move the .apk file to a dir on its own since the entire dir will be uploaded
+# Move the built file to a dir on its own since the entire dir will be uploaded
 # to the S3 bucket.
-rm -rf "${ANDROID_BUILD_LATEST_DIR}"
-mkdir -p "${ANDROID_BUILD_LATEST_DIR}"
+rm -rf "${BUILD_DIR_LATEST}"
+mkdir -p "${BUILD_DIR_LATEST}"
 mv \
-    "${ANDROID_BUILD_DIR}"/android-debug.apk \
-    "${ANDROID_BUILD_LATEST_DIR}"/"${ANDROID_DEBUG_APK_NAME}".apk
+    "${BUILD_DIR}/${PACKAGE_NAME}.${PACKAGE_EXT}" \
+    "${BUILD_DIR_LATEST}/${PACKAGE_NAME}.${PACKAGE_EXT}"
 
 # Download test artifacts. S3 will upload it in the `deploy` step.
 COUNTER=0
@@ -199,9 +199,11 @@ for type in FILE SCREENSHOT; do
         artifact_name=$(echo "$i" | jq -r '.name')
         artifact_filename="${artifact_name}-${RANDOM}.${artifact_ext}"
 
-        mkdir -p "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}"
+        mkdir -p "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${artifact_type}"
         set +e
-        try_with_backoff curl -o "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/${artifact_type}/${artifact_filename}" "${artifact_url}"
+        try_with_backoff curl -o \
+            "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${artifact_type}/${artifact_filename}" \
+            "${artifact_url}"
         set -e
         let COUNTER=COUNTER+1
     done < <(aws devicefarm list-artifacts \
@@ -212,7 +214,7 @@ for type in FILE SCREENSHOT; do
         | jq -cr '.[] | .[] | {url: .url, type: .type, extension: .extension, name: .name}')
 done
 
-echo "$results" > "${ANDROID_BUILD_LATEST_DIR}/${ANDROID_DEBUG_APK_NAME}/list-jobs.json"
+echo "$results" > "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/list-jobs.json"
 
 aws devicefarm delete-project \
     --arn "${project_arn}" \
