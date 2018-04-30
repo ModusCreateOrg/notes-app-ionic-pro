@@ -55,17 +55,19 @@ stage('Checkout') {
     }
 }
 
-// TODO: We could use the `dockerfile` agent.
-// See:
-//  1. https://jenkins.io/doc/book/pipeline/syntax/#agent
-//  2. https://jenkins.io/doc/book/pipeline/docker/
 stage('Run build') {
     node {
         unstash 'src'
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
-            sh ("docker build -t ionic-jenkins --build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/")
-            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER ionic-jenkins ./ci/script/before/run.sh")
+            def buildImage = docker.build(
+                "ionic-jenkins:${env.BUILD_ID}",
+                "--build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/"
+            )
+
+            docker.image("ionic-jenkins:${env.BUILD_ID}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER") {
+                sh './ci/script/before/run.sh'
+            }
         }
         // Anrdoid .apk is built here.
         // TODO: Consider External Workspace Manager plugin since files may be large.
@@ -78,7 +80,9 @@ stage('Run test') {
     node {
         unstash 'build'
         dir(APP_REPO) {
-            sh ("docker run --rm -v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds ionic-jenkins ./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${CONTAINER_ANDROID_BUILD_DIR}'")
+            docker.image("ionic-jenkins:${env.BUILD_ID}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds") {
+                sh "./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${CONTAINER_ANDROID_BUILD_DIR}'"
+            }
         }
         // Artifacts (reports) are downloaded here:
         stash includes: "${APP_REPO}/platforms/android/build/outputs/apk/debug/**", name: 'artifacts'
