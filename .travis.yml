@@ -1,0 +1,69 @@
+---
+git:
+  depth: 1
+env:
+  global:
+    - JAVA_HOME=/usr/lib/jvm/java-8-oracle
+    - S3_BUILD_BUCKET="device-farm-builds-976851222302"
+    - S3_CONFIG_BUCKET="device-farm-configs-976851222302"
+    - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
+    - ANDROID_DEBUG_APK_NAME="travis-android-debug-${TRAVIS_BUILD_NUMBER}-${TRAVIS_BUILD_ID}"
+    - ANDROID_BUILD_LATEST_DIR="${ANDROID_BUILD_DIR}/latest"
+    # AWS_ACCESS_KEY_ID
+    - secure: "AJOyW5ihq8KkfgLHbWaJs09UmDr81cSDrwVA7KsKnn6IpSCPl9UiJva4EuMXV8A/csEw/ExMc8+EAoOkT90VUiw1DZVGePTWpDTHGF1tnhhI6SMRpOsIXuznGAvwFNC76m9aqvTxeN8EKoNI+d8XlLuRKGyUKs1s3aoRNJOcZFvhzbIuSGyDdfYun1BQDdKocsnu6j7P58bpsH0lpFjuFPVXsN46lcbocRShbRawZ2S72Cev74Gvo3Fln+WVJAaJN0A62nFyQZdKyqPIvdsYHsCQA3tEB71O7S9nWzXRh/r7reLRb0fqJLGp3FH12XknHzdFIr4uuDzAdIdN0Xxye28EL/i1loWwxPu5pMH2mnOY6SHNmq4LEzH/nxKWdAbEJZRwe/p0mIoznnUsKDkZbhXgrWClYNEr9KOe/BufdP+fdcqHkbF2R2P6frpNIyQFBjDTQ3eQt7E/ljOnkygQHaCL6pqRW7HccNqTDybMkJW8hW8eO3Ja4TICpkWE+/RYhGBGAmhE2D8bM1U2OgvB/vfpQgHAh4btKUIOC674NgTs4Q1xy73FAKeXvy4/Td2B69BxJT7Et7qynIXQeVUXFv7MKEFZgqdfXimtPhO5MECDCxzVxaeZgVUhTtCqpFmEQVEreT8h5HzQF8Ld2FZMM1uxBZcK7XtW97AsgT9Ez3k="
+    # AWS_SECRET_ACCESS_KEY
+    - secure: "oecMzRKK+7wooSfhLbAIjaeg5RPl9XCbD4ECKybBa0mYzmL8OZ5nuFuNGJn3jmnr2Bs2F48ZiKMgOhD6jpcSQPBhZY0/DvJNIIcb9Qm/HxLDKwYkaa5kzUyXcrJ+3px/f4QcoWKDHwH6IeMGqqvaSy2FxPlvU9Mb/NJ6+0Ij6eOm2CP7tHMdXlQqqCnZXuykGeMEEez1qD2W1rxBwqbgCs0f3AsWWog5rCrucmKbSkKi5RQ9X/6xXK+tVOCXiWuI9VYNGVf+kHLHpz5g9FBXup7c5RmO9Wa9Nv++arq4lsp1mKFdtXZLG0+S6ts8hdHC6grJOHBO3jFWRy/YBKZneDGX3DBKm0ChuLIMYczCU9U66EUyxA0CWpZsoEosDGW/Ox7M3g/+4JP3iCMm0G2fbZ5pb6Yye8WLAcL0jgcjda2iC08P9o77Bf7dqPLLWGimfP5qd1bWGKJIaxeusKFx3MqaPrusIb1yLPKFfONYCQvdD53HVZTZ1U7s3671zZVh7/keL5AmWcUi2GeAKikXyxlZHEK5xd23/SsdLpneeZMVTrwL2FULReYeFdjXw0HHitHepx/N0/nLPANfqcW2wXjFznTadC8TJUqcKvfx3EnKmKBvlzGVPuhlALP39joZuhLlgVX+M/D1brGm1rzhpLE42IUuKEpDQqKbagt+KPI="
+language: android
+android:
+  components:
+    - tools
+    # The BuildTools version used by your project
+    - build-tools-26.0.2
+    # The SDK version used to compile your project
+    - android-26
+  licenses:
+    - android-sdk-preview-license-.+
+    - android-sdk-license-.+
+    - google-gdk-license-.+
+addons:
+  apt:
+    sources:
+      - 
+        sourceline: "deb https://dl.yarnpkg.com/debian/ stable main"
+        key_url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
+    packages:
+      - gradle
+      - oracle-java8-installer
+      - oracle-java8-set-default
+      - yarn
+      - jq
+before_install:
+  - ./ci/install/before/environment.sh
+  - ./ci/install/before/aws_cli_configure.sh
+install:
+  - ./ci/install/dependencies.sh
+before_script:
+  - ./ci/script/before/run.sh
+script:
+  - ./ci/script/aws_device_farm_run.sh "${TRAVIS_COMMIT_MESSAGE}" "${S3_CONFIG_BUCKET}" "${ANDROID_DEBUG_APK_NAME}" "${ANDROID_BUILD_DIR}" "${ANDROID_BUILD_LATEST_DIR}"
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
+    - $HOME/.cache/yarn
+    - $HOME/.cache/pip
+# This step uploads the .apk as well as the test artifacts.
+deploy:
+  provider: s3
+  access_key_id: "${AWS_ACCESS_KEY_ID}"
+  secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+  skip_cleanup: true
+  bucket: "${S3_BUILD_BUCKET}"
+  local_dir: "${ANDROID_BUILD_LATEST_DIR}"
+  region: us-east-1
+  on:
+    all_branches: true
