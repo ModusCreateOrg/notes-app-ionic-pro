@@ -63,7 +63,6 @@ RUN wget -O /tmp/gradle-4.6-bin.zip https://services.gradle.org/distributions/gr
 
 USER $USER:$GROUP
 
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 ENV ANDROID_HOME /opt/android-sdk
 ENV PATH ${PATH}:$ANDROID_HOME
 ENV PATH ${PATH}:/home/$USER/.yarn/bin:/usr/local/bin:/home/$USER/.local/bin
