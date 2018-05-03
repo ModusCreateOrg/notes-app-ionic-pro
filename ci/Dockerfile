@@ -28,6 +28,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
         oracle-java8-installer \
+        oracle-java8-set-default \
         yarn \
     && apt-get clean autoclean \
     && apt-get -y autoremove \
