@@ -194,7 +194,7 @@ mv \
 
 # Download test artifacts. S3 will upload it in the `deploy` step.
 COUNTER=0
-for type in FILE SCREENSHOT; do
+for type in LOG FILE SCREENSHOT; do
     while read i; do
         artifact_url=$(echo "$i" | jq -r '.url')
         artifact_type=$(echo "$i" | jq -r '.type')
