@@ -61,11 +61,11 @@ stage('Run build') {
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
             def buildImage = docker.build(
-                "ionic-jenkins:${env.BUILD_ID}",
+                "ionic-jenkins:${env.BUILD_ID}-${user}-${group}-${uid}-${gid}",
                 "--build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/"
             )
 
-            docker.image("ionic-jenkins:${env.BUILD_ID}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER") {
+            docker.image("ionic-jenkins:${env.BUILD_ID}-${user}-${group}-${uid}-${gid}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER") {
                 sh './ci/script/before/run.sh'
             }
         }
@@ -80,7 +80,7 @@ stage('Run test') {
     node {
         unstash 'build'
         dir(APP_REPO) {
-            docker.image("ionic-jenkins:${env.BUILD_ID}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds") {
+            docker.image("ionic-jenkins:${env.BUILD_ID}-${user}-${group}-${uid}-${gid}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds") {
                 sh "./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${CONTAINER_ANDROID_BUILD_DIR}'"
             }
         }
