@@ -59,7 +59,6 @@ deploy:
   provider: s3
   access_key_id: "${AWS_ACCESS_KEY_ID}"
   secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
-  skip_cleanup: true
   bucket: "${S3_BUILD_BUCKET}"
   local_dir: "${ANDROID_BUILD_LATEST_DIR}"
   region: us-east-1
