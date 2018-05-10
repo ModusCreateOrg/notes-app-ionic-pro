@@ -38,7 +38,6 @@ addons:
       - yarn
       - jq
 before_install:
-  - ./ci/install/before/environment.sh
   - ./ci/install/before/aws_cli_configure.sh
 install:
   - ./ci/install/dependencies.sh
