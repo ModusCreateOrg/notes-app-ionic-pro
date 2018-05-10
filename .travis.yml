@@ -30,6 +30,7 @@ addons:
       - 
         sourceline: "deb https://dl.yarnpkg.com/debian/ stable main"
         key_url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
+    update: true
     packages:
       - gradle
       - oracle-java8-installer
