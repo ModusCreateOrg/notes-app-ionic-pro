@@ -92,11 +92,13 @@ test_file=$(jinja2 \
     "${config_dir}"/tests/BUILTIN_EXPLORER.jinja2 \
     "${config_dir}"/upload_arn.json \
     --format=json)
+# We trim the commit message down to 256 characters since that's the character
+# constraint for the `name` option.
 run_arn=$(aws devicefarm schedule-run \
         --project-arn "${project_arn}" \
         --app-arn "${upload_arn}" \
         --device-pool-arn "${device_pool_arn}" \
-        --name "${COMMIT_MESSAGE}" \
+        --name "${COMMIT_MESSAGE:0:256}" \
         --test "$test_file" \
         --query 'run.arn' \
         --output text \
