@@ -3,7 +3,6 @@ git:
   depth: 1
 env:
   global:
-    - JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - S3_BUILD_BUCKET="device-farm-builds-976851222302"
     - S3_CONFIG_BUCKET="device-farm-configs-976851222302"
     - ANDROID_BUILD_DIR="${TRAVIS_BUILD_DIR}/platforms/android/build/outputs/apk/debug"
