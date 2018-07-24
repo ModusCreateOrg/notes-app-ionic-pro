@@ -6,6 +6,8 @@ ARG UID
 ARG USER
 ARG GROUP
 ARG SHELL=/bin/bash
+ARG ANDROID_API_LEVEL=26
+ARG ANDROID_BUILD_TOOLS_VERSION="26.0.2"
 
 # The yarn repository requires `apt-transport-https`.
 # curl requires the `ca-certificates` bundle.
