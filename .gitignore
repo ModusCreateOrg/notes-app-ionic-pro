@@ -33,3 +33,9 @@ $RECYCLE.BIN/
 .DS_Store
 Thumbs.db
 UserInterfaceState.xcuserstate
+
+# Contains environment variables to be passed into Docker.
+# Allows `env.sample` to be tracked but not any other file beginning with `env.`
+# For example, `env.dev` or `env.prod` won't be tracked.
+env.*
+!env.sample
