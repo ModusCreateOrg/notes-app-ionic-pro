@@ -201,15 +201,13 @@ while [[ $COUNTER -lt "$RES_LENGTH" ]]; do
         \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
     } | join(\"|\")")
 
-set -x
     # The job's result.
     RES_ROOT=$(echo "$RESULTS" | jq -r ".jobs[$COUNTER].result")
     # The total minutes used by the resource to run tests.
     RES_DEVICE_MINUTES=$(echo "$RESULTS" | jq -r ".jobs[$COUNTER].deviceMinutes.total|tostring + \" mins\"")
-set +x
 
     CONTENT="${CONTENT}${RES_DEVICE}|${RES_ROOT}|${RES_DEVICE_MINUTES}\n"
-    ((COUNTER++))
+    let COUNTER=COUNTER+1
 done
 
 echo -e "${HEADER}${CONTENT}" | column -c80 -s"|" -t
@@ -251,7 +249,7 @@ for TYPE in FILE SCREENSHOT; do
             "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${ARTIFACT_TYPE}/${ARTIFACT_FILENAME}" \
             "${ARTIFACT_URL}"
         set -e
-        ((COUNTER++))
+        let COUNTER=COUNTER+1
     done < <(aws devicefarm list-artifacts \
         --arn "${RUN_ARN}" \
         --type "${TYPE}" \
