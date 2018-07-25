@@ -201,6 +201,12 @@ while [[ $COUNTER -lt "$RES_LENGTH" ]]; do
         \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
     } | join(\"|\")")
 
+    set -x
+    echo "RESULTS: $RESULTS"
+    echo "<<<"
+    echo "$RESULTS" | jq -r ".jobs[$COUNTER].deviceMinutes.total|tostring"
+    echo ">>>"
+
     # The job's result.
     RES_ROOT=$(echo "$RESULTS" | jq -r ".jobs[$COUNTER].result")
     # The total minutes used by the resource to run tests.
