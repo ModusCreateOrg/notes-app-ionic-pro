@@ -30,6 +30,9 @@ BUILD_DIR_LATEST="${BUILD_DIR}/latest"
 # Output format of aws commands.
 # See: https://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html#text-output
 FORMAT="text"
+# The region that AWS Device Farm operates in.
+# See: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/
+AWS_DF_REGION="us-west-2"
 
 case $(uname -s) in
     Linux)
@@ -70,7 +73,7 @@ PROJECT_ARN=$(aws devicefarm create-project \
     --name "${PACKAGE_NAME}.${PACKAGE_EXT}" \
     --query 'project.arn' \
     --output "${FORMAT}" \
-    --region "${AWS_DEFAULT_REGION}")
+    --region "${AWS_DF_REGION}")
 
 # Create device pool
 declare DEVICE_POOL_ARN
@@ -80,7 +83,7 @@ DEVICE_POOL_ARN=$(aws devicefarm create-device-pool \
     --rules file://"${CONF_DIR}"/"${PLATFORM}"/device-pool.json \
     --query 'devicePool.arn' \
     --output "${FORMAT}" \
-    --region "${AWS_DEFAULT_REGION}")
+    --region "${AWS_DF_REGION}")
 
 cd "${BUILD_DIR}"
 
@@ -95,7 +98,7 @@ IFS=$' ' read -ra UPLOAD_META <<< $(aws devicefarm create-upload \
     --project-arn "${PROJECT_ARN}" \
     --query 'upload.[url,arn]' \
     --output "${FORMAT}" \
-    --region "${AWS_DEFAULT_REGION}")
+    --region "${AWS_DF_REGION}")
 UPLOAD_URL="${UPLOAD_META[0]}"
 UPLOAD_ARN="${UPLOAD_META[1]}"
 
@@ -120,7 +123,7 @@ RUN_ARN=$(aws devicefarm schedule-run \
         --test "${TEST_FILE}" \
         --query 'run.arn' \
         --output "${FORMAT}" \
-        --region "${AWS_DEFAULT_REGION}")
+        --region "${AWS_DF_REGION}")
 
 # Get info on a run
 get_run() {
@@ -131,7 +134,7 @@ get_run() {
         --arn "$run_arn" \
         --query 'run.[status,arn,result,counters]' \
         --output json \
-        --region "${AWS_DEFAULT_REGION}"
+        --region "${AWS_DF_REGION}"
 }
 
 declare GET_RUN_OUTPUT
@@ -176,7 +179,7 @@ declare -i RES_DEVICE_MINUTES
 RESULTS=$(aws devicefarm list-jobs \
     --arn "${RUN_ARN}" \
     --output json \
-    --region "${AWS_DEFAULT_REGION}")
+    --region "${AWS_DF_REGION}")
 HEADER="Name|Model|Form|Operating System|Resolution|RAM/CPU|Result|Duration\n"
 RES_LENGTH=$(echo "${RESULTS}" | jq '.jobs | length')
 CONTENT=""
@@ -250,7 +253,7 @@ for TYPE in FILE SCREENSHOT; do
         --arn "${RUN_ARN}" \
         --type "${TYPE}" \
         --output json \
-        --region "${AWS_DEFAULT_REGION}" \
+        --region "${AWS_DF_REGION}" \
         | jq -cr '.[] | .[] | {url: .url, type: .type, extension: .extension, name: .name}')
 done
 
@@ -259,4 +262,4 @@ echo "${RESULTS}" > "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/list-jobs.json"
 aws devicefarm delete-project \
     --arn "${PROJECT_ARN}" \
     --output json \
-    --region "${AWS_DEFAULT_REGION}"
+    --region "${AWS_DF_REGION}"
