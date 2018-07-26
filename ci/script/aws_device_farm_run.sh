@@ -201,16 +201,28 @@ while [[ $COUNTER -lt "$RES_LENGTH" ]]; do
         \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
     } | join(\"|\")")
 
-    set -x
-    echo "RESULTS: $RESULTS"
+    echo "JQ VERSION: $(jq --version)"
+    echo "RESULTS: ${RESULTS}"
     echo "<<<"
-    echo "$RESULTS" | jq -r ".jobs[$COUNTER].deviceMinutes.total|tostring"
+    echo "BEGIN COUNTER: $COUNTER"
+    echo "====="
+    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes"
+    echo "====="
+    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total"
+    echo "====="
+    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring"
+    echo "====="
+    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring + \" mins\""
+    echo "====="
+    echo "END COUNTER: $COUNTER"
     echo ">>>"
 
     # The job's result.
-    RES_ROOT=$(echo "$RESULTS" | jq -r ".jobs[$COUNTER].result")
+    RES_ROOT=$(echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].result")
+set -x
     # The total minutes used by the resource to run tests.
-    RES_DEVICE_MINUTES=$(echo "$RESULTS" | jq -r ".jobs[$COUNTER].deviceMinutes.total|tostring + \" mins\"")
+    RES_DEVICE_MINUTES=$(echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring + \" mins\"")
+set +x
 
     CONTENT="${CONTENT}${RES_DEVICE}|${RES_ROOT}|${RES_DEVICE_MINUTES}\n"
     let COUNTER=COUNTER+1
