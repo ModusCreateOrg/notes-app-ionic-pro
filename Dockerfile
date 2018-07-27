@@ -74,7 +74,7 @@ ENV ANDROID_SDK_ROOT=$ANDROID_HOME
 ENV PATH ${PATH}:$ANDROID_HOME:/home/$USER/.yarn/bin:/home/$USER/.local/bin
 
 # We'll need the scripts in './ci/' for the next step so let's copy it over.
-WORKDIR $HOME/builds
+WORKDIR $HOME/notes-app-ionic-pro
 COPY ./package.json .
 COPY ./ci ./ci
 RUN ./ci/install/dependencies.sh
