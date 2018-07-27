@@ -27,15 +27,18 @@ node {
 
 properties([
     parameters([
-        string(name: 'git_branch_tag_or_commit',
-               description: "Git Branch, Tag, or Commit reference for ${APP_REPO} (${APP_NAME})",
-               defaultValue: APP_DEFAULT_BRANCH),
         string(name: 's3_config_bucket',
-               description: "The S3 bucket that contains the cofiguration for AWS DeviceFarm",
+               description: "The S3 bucket that contains the cofiguration for AWS DeviceFarm tests and device pools.",
                defaultValue: 'device-farm-configs-976851222302'),
         string(name: 's3_build_bucket',
-               description: "The S3 bucket to which builds and DeviceFarm reports will be uploaded to",
-               defaultValue: 'device-farm-builds-976851222302')
+               description: "The S3 bucket to which builds and DeviceFarm reports will be uploaded.",
+               defaultValue: 'device-farm-builds-976851222302'),
+        string(name: 'android_api_level',
+               description: "The Android SDK version.",
+               defaultValue: '26'),
+        string(name: 'android_build_tools_version',
+               description: "The Android build-tools version.",
+               defaultValue: '26.0.2')
     ])
 ])
 
@@ -55,17 +58,17 @@ stage('Checkout') {
     }
 }
 
-stage('Run build') {
+stage('Build') {
     node {
         unstash 'src'
         dir(APP_REPO) {
             // TODO: We should be getting a built image from the Docker registry.
-            def buildImage = docker.build(
-                "ionic-jenkins:${env.BUILD_ID}-${user}-${group}-${uid}-${gid}",
-                "--build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} ./ci/"
+            docker.build(
+                "ionic-jenkins",
+                "--build-arg USER=${user} --build-arg GROUP=${group} --build-arg UID=${uid} --build-arg GID=${gid} --build-arg ANDROID_API_LEVEL=${android_api_level} --build-arg ANDROID_BUILD_TOOLS_VERSION=${android_build_tools_version} ."
             )
 
-            docker.image("ionic-jenkins:${env.BUILD_ID}-${user}-${group}-${uid}-${gid}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER") {
+            docker.image("ionic-jenkins").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds -e BUILD_NUMBER=$BUILD_NUMBER") {
                 sh './ci/script/before/run.sh'
             }
         }
@@ -80,7 +83,7 @@ stage('Run test') {
     node {
         unstash 'build'
         dir(APP_REPO) {
-            docker.image("ionic-jenkins:${env.BUILD_ID}-${user}-${group}-${uid}-${gid}").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds") {
+            docker.image("ionic-jenkins").inside("-v ${env.WORKSPACE}/${APP_REPO}:$HOME/builds -w $HOME/builds") {
                 sh "./ci/script/aws_device_farm_run.sh '${commitMessage}' '${s3_config_bucket}' '${ANDROID_DEBUG_APK_NAME}' '${CONTAINER_ANDROID_BUILD_DIR}'"
             }
         }
@@ -89,7 +92,7 @@ stage('Run test') {
     }
 }
 
-stage('Run deploy') {
+stage('Deploy') {
     node {
         unstash 'artifacts'
         dir(APP_REPO) {

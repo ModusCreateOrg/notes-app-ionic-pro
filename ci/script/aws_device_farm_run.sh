@@ -11,9 +11,8 @@ IFS=$'\n\t'
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 # http://stackoverflow.com/a/246128/424301
 declare DIR
-# shellcheck disable=SC2034
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
+# shellcheck disable=SC1090
 . "$DIR/../common.sh"
 
 declare COMMIT_MESSAGE
@@ -21,14 +20,19 @@ declare S3_CONFIG_BUCKET
 declare PACKAGE_NAME
 declare BUILD_DIR
 declare BUILD_DIR_LATEST
-declare WAIT
+declare FORMAT
 
-COMMIT_MESSAGE="${1:?'You must specify the commit message.'}"
-S3_CONFIG_BUCKET="${2:?'You must specify the S3 config bucket.'}"
-PACKAGE_NAME="${3}"
-BUILD_DIR="${4}"
+COMMIT_MESSAGE="${1:?'Missing commit message.'}"
+S3_CONFIG_BUCKET="${2:?'Missing S3 config bucket.'}"
+PACKAGE_NAME="${3:?'Missing package name.'}"
+BUILD_DIR="${4:?'Missing build directory location.'}"
 BUILD_DIR_LATEST="${BUILD_DIR}/latest"
-WAIT=30
+# Output format of aws commands.
+# See: https://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html#text-output
+FORMAT="text"
+# The region that AWS Device Farm operates in.
+# See: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/
+AWS_DF_REGION="us-west-2"
 
 case $(uname -s) in
     Linux)
@@ -42,6 +46,7 @@ case $(uname -s) in
         PLATFORM="IOS"
         UPLOAD_TYPE="IOS_APP"
         PACKAGE_EXT="ipa"
+        # TODO
     ;;
 
     *)
@@ -49,60 +54,76 @@ case $(uname -s) in
         exit 1
     ;;
 esac
+# From here onwards, `PLATFORM` will need to be lower case.
+PLATFORM="${PLATFORM,,}"
 
-config_dir=$(mktemp -d)
 # Get our configs from S3
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM,,}"/device-pool.json "${config_dir}"/"${PLATFORM,,}"/device-pool.json
-aws s3 cp s3://"${S3_CONFIG_BUCKET}"/tests/BUILTIN_EXPLORER.jinja2 "${config_dir}"/tests/BUILTIN_EXPLORER.jinja2
+declare CONF_DIR
+CONF_DIR=$(mktemp -d)
+aws s3 cp \
+  s3://"${S3_CONFIG_BUCKET}"/"${PLATFORM}"/device-pool.json \
+  "${CONF_DIR}"/"${PLATFORM}"/device-pool.json
+aws s3 cp \
+  s3://"${S3_CONFIG_BUCKET}"/tests/BUILTIN_EXPLORER.jinja2 \
+  "${CONF_DIR}"/tests/BUILTIN_EXPLORER.jinja2
 
 # Create project
-project_arn=$(aws devicefarm create-project \
+declare PROJECT_ARN
+PROJECT_ARN=$(aws devicefarm create-project \
     --name "${PACKAGE_NAME}.${PACKAGE_EXT}" \
     --query 'project.arn' \
-    --output text \
-    --region us-west-2)
+    --output "${FORMAT}" \
+    --region "${AWS_DF_REGION}")
 
 # Create device pool
-device_pool_arn=$(aws devicefarm create-device-pool \
-    --project-arn "${project_arn}" \
-    --name "${PLATFORM,,}"-devices \
-    --rules file://"${config_dir}"/"${PLATFORM,,}"/device-pool.json \
+declare DEVICE_POOL_ARN
+DEVICE_POOL_ARN=$(aws devicefarm create-device-pool \
+    --project-arn "${PROJECT_ARN}" \
+    --name "${PLATFORM}"-devices \
+    --rules file://"${CONF_DIR}"/"${PLATFORM}"/device-pool.json \
     --query 'devicePool.arn' \
-    --output text \
-    --region us-west-2)
+    --output "${FORMAT}" \
+    --region "${AWS_DF_REGION}")
 
 cd "${BUILD_DIR}"
 
 # Create an upload
-IFS=$' ' read -ra upload_meta <<< $(aws devicefarm create-upload \
+declare -a UPLOAD_META
+declare UPLOAD_URL
+declare UPLOAD_ARN
+# shellcheck disable=SC2046
+IFS=$' ' read -ra UPLOAD_META <<< $(aws devicefarm create-upload \
     --name "${PACKAGE_NAME}.${PACKAGE_EXT}" \
     --type "${UPLOAD_TYPE}" \
-    --project-arn "${project_arn}" \
+    --project-arn "${PROJECT_ARN}" \
     --query 'upload.[url,arn]' \
-    --output text \
-    --region us-west-2)
-upload_url="${upload_meta[0]}"
-upload_arn="${upload_meta[1]}"
+    --output "${FORMAT}" \
+    --region "${AWS_DF_REGION}")
+UPLOAD_URL="${UPLOAD_META[0]}"
+UPLOAD_ARN="${UPLOAD_META[1]}"
 
-curl -T "${BUILD_DIR}/${PACKAGE_NAME}.${PACKAGE_EXT}" "${upload_url}"
+curl -T "${BUILD_DIR}/${PACKAGE_NAME}.${PACKAGE_EXT}" "${UPLOAD_URL}"
 
 # Schedule a run
-echo "{\"upload_arn\":\"$upload_arn\"}" > "${config_dir}"/upload_arn.json
-test_file=$(jinja2 \
-    "${config_dir}"/tests/BUILTIN_EXPLORER.jinja2 \
-    "${config_dir}"/upload_arn.json \
+declare TEST_FILE
+echo "{\"upload_arn\":\"$UPLOAD_ARN\"}" > "${CONF_DIR}"/upload_arn.json
+TEST_FILE=$(jinja2 \
+    "${CONF_DIR}"/tests/BUILTIN_EXPLORER.jinja2 \
+    "${CONF_DIR}"/upload_arn.json \
     --format=json)
 # We trim the commit message down to 256 characters since that's the character
 # constraint for the `name` option.
-run_arn=$(aws devicefarm schedule-run \
-        --project-arn "${project_arn}" \
-        --app-arn "${upload_arn}" \
-        --device-pool-arn "${device_pool_arn}" \
+# See: https://docs.aws.amazon.com/devicefarm/latest/APIReference/API_ScheduleRun.html#devicefarm-ScheduleRun-request-name
+declare RUN_ARN
+RUN_ARN=$(aws devicefarm schedule-run \
+        --project-arn "${PROJECT_ARN}" \
+        --app-arn "${UPLOAD_ARN}" \
+        --device-pool-arn "${DEVICE_POOL_ARN}" \
         --name "${COMMIT_MESSAGE:0:256}" \
-        --test "$test_file" \
+        --test "${TEST_FILE}" \
         --query 'run.arn' \
-        --output text \
-        --region us-west-2)
+        --output "${FORMAT}" \
+        --region "${AWS_DF_REGION}")
 
 # Get info on a run
 get_run() {
@@ -113,45 +134,58 @@ get_run() {
         --arn "$run_arn" \
         --query 'run.[status,arn,result,counters]' \
         --output json \
-        --region us-west-2
+        --region "${AWS_DF_REGION}"
 }
-declare -a get_run_output
-get_run_output=$(get_run "$run_arn")
-run_status=$(echo "$get_run_output" | jq -r '.[0]')
-run_result=$(echo "$get_run_output" | jq -r '.[2]')
-run_overview=$(echo "$get_run_output" | jq -r '.[3]')
+
+declare GET_RUN_OUTPUT
+declare RUN_STATUS
+declare RUN_RESULT
+declare RUN_OVERVIEW
+GET_RUN_OUTPUT=$(get_run "$RUN_ARN")
+RUN_STATUS=$(echo "$GET_RUN_OUTPUT" | jq -r '.[0]')
+RUN_RESULT=$(echo "$GET_RUN_OUTPUT" | jq -r '.[2]')
+RUN_OVERVIEW=$(echo "$GET_RUN_OUTPUT" | jq -r '.[3]')
 
 echo "########## AWS Device Farm run started"
 echo ""
-progress=""
-output=""
+declare PROGRESS
+declare OUTPUT
+PROGRESS=""
+OUTPUT=""
 # See: https://docs.aws.amazon.com/cli/latest/reference/devicefarm/get-run.html#output
-while [[ $run_status != "COMPLETED" ]]; do
-    if [[ -n "$output" ]]; then
-        sleep "$WAIT"
+while [[ $RUN_STATUS != "COMPLETED" ]]; do
+    if [[ -n "$OUTPUT" ]]; then
+        sleep 30
     fi
-    progress="${progress}."
-    get_run_output=$(get_run "$run_arn")
-    run_status=$(echo "$get_run_output" | jq -r '.[0]')
-    run_result=$(echo "$get_run_output" | jq -r '.[2]')
-    run_overview=$(echo "$get_run_output" | jq -r '.[3]')
+    PROGRESS="${PROGRESS}."
+    GET_RUN_OUTPUT=$(get_run "$RUN_ARN")
+    RUN_STATUS=$(echo "$GET_RUN_OUTPUT" | jq -r '.[0]')
+    RUN_RESULT=$(echo "$GET_RUN_OUTPUT" | jq -r '.[2]')
+    RUN_OVERVIEW=$(echo "$GET_RUN_OUTPUT" | jq -r '.[3]')
 
-    output=$(printf "%s\n%s" "$progress" "$run_overview")
-    echo "$output"
+    OUTPUT=$(printf "%s\n%s" "$PROGRESS" "$RUN_OVERVIEW")
+    echo "$OUTPUT"
 done
-echo "########## Test runs done with result \"$run_result\""
+echo "########## Test runs completed with result \"$RUN_RESULT\""
 
-results=$(aws devicefarm list-jobs \
-    --arn "$run_arn" \
+declare RESULTS
+declare HEADER
+declare -i RES_LENGTH
+declare CONTENT
+declare -i COUNTER
+declare RES_DEVICE
+declare RES_ROOT
+declare RES_DEVICE_MINUTES
+RESULTS=$(aws devicefarm list-jobs \
+    --arn "${RUN_ARN}" \
     --output json \
-    --region us-west-2)
-
-header="Name|Model|Form|Operating System|Resolution|RAM/CPU|Result|Duration\n"
-res_length=$(echo "$results" | jq '.jobs | length')
-content=""
-counter=0
-while [ $counter -lt "$res_length" ]; do
-    res_device=$(echo "$results" | jq -r ".jobs[$counter].device | {
+    --region "${AWS_DF_REGION}")
+HEADER="Name|Model|Form|Operating System|Resolution|RAM/CPU|Result|Duration\n"
+RES_LENGTH=$(echo "${RESULTS}" | jq '.jobs | length')
+CONTENT=""
+COUNTER=0
+while [[ $COUNTER -lt "$RES_LENGTH" ]]; do
+    RES_DEVICE=$(echo "${RESULTS}" | jq -r ".jobs[$COUNTER].device | {
         # The device's display name.
         name,
         # The device's model ID.
@@ -166,19 +200,20 @@ while [ $counter -lt "$res_length" ]; do
         # the clock speed of the device's CPU converted from Hz to GHz.
         \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
     } | join(\"|\")")
-    # The job's result.
-    res_root=$(echo "$results" | jq -r ".jobs[$counter].result")
-    # The total minutes used by the resource to run tests.
-    res_device_minutes=$(echo "$results" | jq -r ".jobs[$counter].deviceMinutes.total|tostring + \" mins\"")
 
-    content="${content}${res_device}|${res_root}|${res_device_minutes}\n"
-    let counter=counter+1
+    # The job's result.
+    RES_ROOT=$(echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].result")
+    # The total minutes used by the resource to run tests.
+    RES_DEVICE_MINUTES=$(echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring + \" mins\"")
+
+    CONTENT="${CONTENT}${RES_DEVICE}|${RES_ROOT}|${RES_DEVICE_MINUTES}\n"
+    let COUNTER=COUNTER+1
 done
 
-echo -e "${header}${content}" | column -c80 -s"|" -t
+echo -e "${HEADER}${CONTENT}" | column -c80 -s"|" -t
 
 # Fail the build if it doesn't pass.
-if [[ $run_result == "ERRORED" ]] || [[ $run_result == "FAILED" ]]; then
+if [[ "${RUN_RESULT}" == "ERRORED" ]] || [[ "${RUN_RESULT}" == "FAILED" ]]; then
     echo "Terminating build"
     exit 1
 fi
@@ -192,33 +227,40 @@ mv \
     "${BUILD_DIR_LATEST}/${PACKAGE_NAME}.${PACKAGE_EXT}"
 
 # Download test artifacts. S3 will upload it in the `deploy` step.
+declare TYPE
+declare ARTIFACT
+declare ARTIFACT_URL
+declare ARTIFACT_TYPE
+declare ARTIFACT_EXT
+declare ARTIFACT_NAME
+declare ARTIFACT_FILENAME
 COUNTER=0
-for type in FILE SCREENSHOT; do
-    while read i; do
-        artifact_url=$(echo "$i" | jq -r '.url')
-        artifact_type=$(echo "$i" | jq -r '.type')
-        artifact_ext=$(echo "$i" | jq -r '.extension')
-        artifact_name=$(echo "$i" | jq -r '.name')
-        artifact_filename="${artifact_name}-${RANDOM}.${artifact_ext}"
+for TYPE in FILE SCREENSHOT; do
+    while read -r ARTIFACT; do
+        ARTIFACT_URL=$(echo "$ARTIFACT" | jq -r '.url')
+        ARTIFACT_TYPE=$(echo "$ARTIFACT" | jq -r '.type')
+        ARTIFACT_EXT=$(echo "$ARTIFACT" | jq -r '.extension')
+        ARTIFACT_NAME=$(echo "$ARTIFACT" | jq -r '.name')
+        ARTIFACT_FILENAME="${ARTIFACT_NAME}-${RANDOM}.${ARTIFACT_EXT}"
 
-        mkdir -p "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${artifact_type}"
+        mkdir -p "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${ARTIFACT_TYPE}"
         set +e
-        try_with_backoff curl -o \
-            "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${artifact_type}/${artifact_filename}" \
-            "${artifact_url}"
+        try_with_backoff curl -sSo \
+            "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/${ARTIFACT_TYPE}/${ARTIFACT_FILENAME}" \
+            "${ARTIFACT_URL}"
         set -e
         let COUNTER=COUNTER+1
     done < <(aws devicefarm list-artifacts \
-        --arn "$run_arn" \
-        --type "$type" \
+        --arn "${RUN_ARN}" \
+        --type "${TYPE}" \
         --output json \
-        --region us-west-2 \
+        --region "${AWS_DF_REGION}" \
         | jq -cr '.[] | .[] | {url: .url, type: .type, extension: .extension, name: .name}')
 done
 
-echo "$results" > "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/list-jobs.json"
+echo "${RESULTS}" > "${BUILD_DIR_LATEST}/${PACKAGE_NAME}/list-jobs.json"
 
 aws devicefarm delete-project \
-    --arn "${project_arn}" \
+    --arn "${PROJECT_ARN}" \
     --output json \
-    --region us-west-2
+    --region "${AWS_DF_REGION}"

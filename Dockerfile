@@ -6,6 +6,8 @@ ARG UID
 ARG USER
 ARG GROUP
 ARG SHELL=/bin/bash
+ARG ANDROID_API_LEVEL=26
+ARG ANDROID_BUILD_TOOLS_VERSION="26.0.2"
 
 # The yarn repository requires `apt-transport-https`.
 # curl requires the `ca-certificates` bundle.
@@ -38,6 +40,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && export DEBIAN_FRONTEND=newt
 
 # Install fixuid.
+# See: https://boxboat.com/2017/07/25/fixuid-change-docker-container-uid-gid/
 RUN addgroup --gid $GID $GROUP \
     && adduser --uid $UID --ingroup $GROUP --home /home/$USER --shell $SHELL --disabled-password --gecos "" $USER \
     && curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.3/fixuid-0.3-linux-amd64.tar.gz | tar -C /usr/local/bin -xzf - \
@@ -47,33 +50,41 @@ RUN addgroup --gid $GID $GROUP \
     && printf "user: $USER\ngroup: $GROUP\n" > /etc/fixuid/config.yml
 
 # Install the latest jq.
-RUN wget -O /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
+RUN wget -nv -O /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
     && chmod +x /usr/local/bin/jq
 
 # Install Android SDK.
-RUN wget -O /tmp/sdk-tools-linux-3859397.zip https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip \
-    && unzip /tmp/sdk-tools-linux-3859397.zip -d /opt/android-sdk \
+RUN wget -nv https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip \
+    && echo "92ffee5a1d98d856634e8b71132e8a95d96c83a63fde1099be3d86df3106def9 sdk-tools-linux-4333796.zip" > SHA256SUMS \
+    && sha256sum -c SHA256SUMS | grep OK \
+    && unzip -q sdk-tools-linux-4333796.zip -d /opt/android-sdk \
     && chown -R $USER:$GROUP /opt/android-sdk \
-    && rm /tmp/sdk-tools-linux-3859397.zip
+    && rm sdk-tools-linux-4333796.zip SHA256SUMS
 
 # Install Gradle.
-RUN wget -O /tmp/gradle-4.6-bin.zip https://services.gradle.org/distributions/gradle-4.6-bin.zip \
-    && unzip /tmp/gradle-4.6-bin.zip -d /opt/gradle \
-    && rm /tmp/gradle-4.6-bin.zip \
+RUN wget -nv https://services.gradle.org/distributions/gradle-4.6-bin.zip \
+    && unzip -q gradle-4.6-bin.zip -d /opt/gradle \
+    && rm gradle-4.6-bin.zip \
     && ln -s /opt/gradle/gradle-4.6/bin/gradle /usr/bin/gradle
 
 USER $USER:$GROUP
 
 ENV ANDROID_HOME /opt/android-sdk
-ENV PATH ${PATH}:$ANDROID_HOME:/home/$USER/.yarn/bin:/usr/local/bin:/home/$USER/.local/bin
+ENV ANDROID_SDK_ROOT=$ANDROID_HOME
+ENV PATH ${PATH}:$ANDROID_HOME:/home/$USER/.yarn/bin:/home/$USER/.local/bin
 
-COPY ./ $HOME/builds
-WORKDIR $HOME/builds
-RUN ./install/dependencies.sh
+# We'll need the scripts in './ci/' for the next step so let's copy it over.
+WORKDIR $HOME/notes-app-ionic-pro
+COPY ./package.json .
+COPY ./ci ./ci
+RUN ./ci/install/dependencies.sh
+COPY . .
 
 # Accept Android SDK licences, install the required SDK's and update them.
-RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses \
-    && $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26" "build-tools;26.0.2" \
+RUN mkdir -p ~/.android \
+    && touch ~/.android/repositories.cfg \
+    && yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses \
+    && $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-$ANDROID_API_LEVEL" "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
     && $ANDROID_HOME/tools/bin/sdkmanager --update
 
 CMD ["bash"]

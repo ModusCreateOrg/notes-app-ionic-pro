@@ -56,13 +56,18 @@ use_node() {
     version=${1:-8}
 
     set +e
-    nvm use "${version}"
+    nvm use "${version}" 2>/dev/null
     nvm_installed=$?
     set -e
 
     if [[ $nvm_installed -ne 0 ]]; then
-        source "$HOME/.nvm/nvm.sh"
+        # shellcheck disable=SC1090
+        . "$HOME/.nvm/nvm.sh"
         nvm install "${version}"
         nvm use "${version}"
     fi
 }
+
+# Make debugging easier
+# See: http://wiki.bash-hackers.org/scripting/debuggingtips#making_xtrace_more_useful
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
