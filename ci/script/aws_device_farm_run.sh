@@ -175,7 +175,7 @@ declare CONTENT
 declare -i COUNTER
 declare RES_DEVICE
 declare RES_ROOT
-declare -i RES_DEVICE_MINUTES
+declare RES_DEVICE_MINUTES
 RESULTS=$(aws devicefarm list-jobs \
     --arn "${RUN_ARN}" \
     --output json \
@@ -201,28 +201,10 @@ while [[ $COUNTER -lt "$RES_LENGTH" ]]; do
         \"memory\": \"\(.memory / 1000 / 1000 / 1000|tostring + \"GB\")/\(.cpu[\"clock\"] * .10 + 0.5|floor/100.0|tostring + \"GHz\")\"
     } | join(\"|\")")
 
-    echo "JQ VERSION: $(jq --version)"
-    echo "RESULTS: ${RESULTS}"
-    echo "<<<"
-    echo "BEGIN COUNTER: $COUNTER"
-    echo "====="
-    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes"
-    echo "====="
-    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total"
-    echo "====="
-    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring"
-    echo "====="
-    echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring + \" mins\""
-    echo "====="
-    echo "END COUNTER: $COUNTER"
-    echo ">>>"
-
     # The job's result.
     RES_ROOT=$(echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].result")
-set -x
     # The total minutes used by the resource to run tests.
     RES_DEVICE_MINUTES=$(echo "${RESULTS}" | jq -r ".jobs[${COUNTER}].deviceMinutes.total|tostring + \" mins\"")
-set +x
 
     CONTENT="${CONTENT}${RES_DEVICE}|${RES_ROOT}|${RES_DEVICE_MINUTES}\n"
     let COUNTER=COUNTER+1
