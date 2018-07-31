@@ -1,9 +1,6 @@
 #!/usr/bin/env groovy
 
-def APP_NAME = 'notes-app-ionic-pro'
 def APP_REPO = 'notes-app-ionic-pro'
-def APP_REPO_URL = "https://github.com/ModusCreateOrg/${APP_REPO}"
-def APP_DEFAULT_BRANCH = 'master'
 def AWS_DEV_CREDENTIAL_ID = '38613aab-24e4-4c2f-bf84-92a5b04d07c9'
 def CONTAINER_ANDROID_BUILD_DIR
 def HOST_ANDROID_BUILD_DIR
